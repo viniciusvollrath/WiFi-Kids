@@ -77,7 +77,7 @@ WiFi-Kids/
 - `openNDS` installed:  
   ```bash
   opkg update && opkg install opennds
-````
+
 
 * Docker installed on dev machine (for backend/UI).
 
