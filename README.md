@@ -142,10 +142,10 @@ Restart:
 
 ## 👥 Team
 
-* **Vinicius Vollrath** — Infra / OpenWRT / Backend
 * **Lucas Nogueira** — LangChain / GPT-5 prompts
 * **Paulo Cesar** — Backend / Data & Metrics
-
+* **Vinicius Vollrath** — Infra / OpenWRT / Backend
+  
 ---
 
 ## 📜 License
