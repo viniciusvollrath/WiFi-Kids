@@ -163,7 +163,3 @@ MIT © Wi-Fi Kids contributors
 ---
 
 👉 **Wi-Fi Kids: Learn before you surf.**
-
-
-Quer que eu crie também o **`CONTRIBUTING.md`** e o **`SECURITY.md`** iniciais para complementar o repo antes de enviar para a organização?
-```
