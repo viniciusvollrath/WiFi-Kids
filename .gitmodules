@@ -1,0 +1,3 @@
+[submodule "ui/webapp"]
+	path = ui/webapp
+	url = git@github.com:viniciusvollrath/app-wifi-kids.git
