@@ -1,0 +1,98 @@
+.agentMessage {
+  display: flex;
+  align-items: flex-start;
+  gap: var(--spacing-md);
+  margin-bottom: var(--spacing-lg);
+  max-width: 80%;
+}
+
+.avatar {
+  font-size: var(--font-size-2xl);
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background-color: var(--color-background-muted);
+}
+
+.content {
+  flex: 1;
+  min-width: 0;
+}
+
+.messageText {
+  background-color: var(--color-background-muted);
+  border-radius: var(--radius-lg) var(--radius-lg) var(--radius-lg) var(--radius-xs);
+  padding: var(--spacing-md) var(--spacing-lg);
+  font-size: var(--font-size-base);
+  line-height: 1.5;
+  color: var(--color-text);
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+}
+
+.metadata {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  margin-top: var(--spacing-xs);
+  font-size: var(--font-size-xs);
+  color: var(--color-text-muted);
+}
+
+.timestamp {
+  font-weight: 500;
+}
+
+.persona,
+.reason {
+  opacity: 0.7;
+  font-style: italic;
+}
+
+/* Responsive design - mobile first approach */
+@media (max-width: 480px) {
+  .agentMessage {
+    max-width: 90%;
+  }
+  
+  .messageText {
+    font-size: var(--font-size-sm);
+    padding: var(--spacing-sm) var(--spacing-md);
+  }
+  
+  .avatar {
+    font-size: var(--font-size-xl);
+    width: 28px;
+    height: 28px;
+  }
+}
+
+@media (min-width: 768px) {
+  .messageText {
+    font-size: var(--font-size-lg);
+    padding: var(--spacing-lg) var(--spacing-xl);
+  }
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+  .agentMessage {
+    transition: none;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .messageText {
+    background-color: var(--color-background-muted);
+    border: 1px solid var(--color-border);
+  }
+  
+  .metadata {
+    color: var(--color-text);
+  }
+}

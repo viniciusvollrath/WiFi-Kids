@@ -1,0 +1,142 @@
+.chatInputContainer {
+  padding: var(--spacing-lg);
+  border-top: 1px solid var(--color-border);
+  background-color: var(--color-background);
+}
+
+.errorMessage {
+  background-color: #ffebee;
+  color: #c62828;
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-md);
+  font-size: var(--font-size-sm);
+  margin-bottom: var(--spacing-md);
+  border-left: 4px solid #f44336;
+}
+
+.inputForm {
+  display: flex;
+  gap: var(--spacing-md);
+  align-items: flex-end;
+}
+
+.chatInput {
+  flex: 1;
+  padding: var(--spacing-md) var(--spacing-lg);
+  border: 2px solid var(--color-border);
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-base);
+  line-height: 1.4;
+  outline: none;
+  transition: border-color var(--duration-normal) ease, box-shadow var(--duration-normal) ease;
+  background-color: var(--color-background);
+  min-height: var(--touch-target-min);
+  color: var(--color-text);
+}
+
+.chatInput:focus {
+  border-color: var(--color-primary);
+  box-shadow: 0 0 0 2px rgba(14, 165, 233, 0.2);
+}
+
+.chatInput:disabled {
+  background-color: var(--color-background-muted);
+  color: var(--color-text-muted);
+  cursor: not-allowed;
+}
+
+.chatInput::placeholder {
+  color: var(--color-text-muted);
+  font-style: italic;
+}
+
+.sendButton {
+  padding: var(--spacing-md) var(--spacing-xl);
+  background-color: var(--color-primary);
+  color: white;
+  border: none;
+  border-radius: var(--radius-full);
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  cursor: pointer;
+  transition: all var(--duration-normal) ease;
+  min-height: var(--touch-target-min);
+  min-width: var(--touch-target-min);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.sendButton:hover:not(:disabled) {
+  background-color: var(--color-primary-hover);
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-md);
+}
+
+.sendButton:active:not(:disabled) {
+  transform: translateY(0);
+  box-shadow: var(--shadow-sm);
+}
+
+.sendButton:disabled {
+  background-color: var(--color-primary-disabled);
+  cursor: not-allowed;
+  transform: none;
+}
+
+.sendButton:focus {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+}
+
+/* Responsive design - mobile first approach */
+@media (min-width: 768px) {
+  .chatInputContainer {
+    padding: var(--spacing-xl);
+  }
+  
+  .chatInput {
+    font-size: var(--font-size-base);
+    padding: var(--spacing-md) var(--spacing-lg);
+  }
+  
+  .sendButton {
+    padding: var(--spacing-md) var(--spacing-2xl);
+    font-size: var(--font-size-base);
+  }
+}
+
+/* Accessibility improvements */
+@media (prefers-reduced-motion: reduce) {
+  .chatInput,
+  .sendButton {
+    transition: none;
+  }
+  
+  .sendButton:hover:not(:disabled) {
+    transform: none;
+  }
+}
+
+/* High contrast mode support */
+@media (prefers-contrast: high) {
+  .chatInput {
+    border-color: var(--color-border);
+  }
+  
+  .chatInput:focus {
+    border-color: var(--color-border);
+    box-shadow: 0 0 0 2px var(--color-border);
+  }
+  
+  .sendButton {
+    background-color: var(--color-text);
+    border: 1px solid var(--color-background);
+  }
+  
+  .errorMessage {
+    background-color: var(--color-background);
+    color: var(--color-text);
+    border: 2px solid #f44336;
+  }
+}

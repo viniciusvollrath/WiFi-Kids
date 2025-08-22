@@ -1,0 +1,59 @@
+/**
+ * SimulationBadge styles - discrete indicator for mock mode
+ */
+
+.badge {
+  position: fixed;
+  top: var(--spacing-sm);
+  right: var(--spacing-sm);
+  background: rgba(255, 193, 7, 0.9);
+  color: #856404;
+  padding: var(--spacing-xs) var(--spacing-sm);
+  border-radius: var(--radius-lg);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-xs);
+  box-shadow: var(--shadow-md);
+  backdrop-filter: blur(4px);
+  z-index: 1000;
+  border: 1px solid rgba(255, 193, 7, 0.3);
+  transition: opacity var(--duration-slow) ease;
+  min-height: var(--touch-target-min);
+}
+
+.badge:hover {
+  opacity: 0.8;
+}
+
+.icon {
+  font-size: 10px;
+  line-height: 1;
+}
+
+.text {
+  line-height: 1;
+  white-space: nowrap;
+}
+
+/* Responsive adjustments - mobile first approach */
+@media (min-width: 768px) {
+  .badge {
+    top: var(--spacing-md);
+    right: var(--spacing-md);
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: var(--font-size-sm);
+  }
+  
+  .icon {
+    font-size: var(--font-size-xs);
+  }
+}
+
+/* Reduced motion support */
+@media (prefers-reduced-motion: reduce) {
+  .badge {
+    transition: none;
+  }
+}

@@ -1,0 +1,17 @@
+
+version: "3.9"
+services:
+  backend:
+    build: ./apps/backend
+    ports:
+      - "3001:3001"
+    env_file:
+      - ./apps/backend/.env
+  pwa:
+    build: ./apps/pwa
+    ports:
+      - "8080:8080"
+    environment:
+      - VITE_BACKEND_URL=http://localhost:3001
+    depends_on:
+      - backend
