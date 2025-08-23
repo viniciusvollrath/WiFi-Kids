@@ -2,8 +2,8 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from api.core.db import get_db
-from api.core.settings import SESSION_TTL_SEC, AGENT_DEFAULT_PERSONA, AGENT_TYPE
-from api.integrations.agent import create_agent
+from api.core.settings import SESSION_TTL_SEC, AGENT_DEFAULT_PERSONA
+from api.integrations.router import agent_router
 from api.integrations.types import AgentContext, PersonaType, SubjectType, DifficultyLevel
 from api.repositories.challenges import load_challenge, decrement_attempts, set_status, create_challenge
 from api.repositories.sessions import create_session
@@ -12,13 +12,30 @@ from api.schemas.challenge import ChallengeAnswerIn, ChallengeApprovedOut, Chall
 
 router = APIRouter()
 
+@router.get("/agents/available")
+async def get_available_agents(persona: str = None):
+    """Get list of available agents, optionally filtered by persona."""
+    try:
+        persona_enum = PersonaType(persona) if persona else None
+        agents = agent_router.get_available_agents(persona_enum)
+        return {"agents": agents}
+    except ValueError:
+        raise HTTPException(status_code=400, detail=f"Invalid persona: {persona}")
+
+@router.get("/agents/policy/{persona}")
+async def get_persona_policy(persona: str):
+    """Get the policy configuration for a specific persona."""
+    try:
+        persona_enum = PersonaType(persona)
+        policy = agent_router.get_persona_policy(persona_enum)
+        return {"persona": persona, "policy": policy}
+    except ValueError:
+        raise HTTPException(status_code=400, detail=f"Invalid persona: {persona}")
+
 @router.post("/challenge/generate", response_model=ChallengeGenerateOut)
 async def generate_challenge(body: ChallengeGenerateIn, db: Session = Depends(get_db)):
-    """Generate a new challenge using the configured agent."""
+    """Generate a new challenge using the agent router."""
     try:
-        # Create agent using configured type
-        agent = create_agent(AGENT_TYPE)
-        
         # Build context
         context = AgentContext(
             locale=body.locale or "pt-BR",
@@ -29,6 +46,9 @@ async def generate_challenge(body: ChallengeGenerateIn, db: Session = Depends(ge
             difficulty=DifficultyLevel(body.difficulty) if body.difficulty else None,
             previous_performance=body.previous_performance
         )
+        
+        # Select appropriate agent using router
+        agent = agent_router.select_agent(context)
         
         # Generate challenge
         challenge_payload = await agent.generate_challenge(context)
@@ -58,8 +78,19 @@ async def challenge_answer(body: ChallengeAnswerIn, db: Session = Depends(get_db
     if ch.status != "open":
         raise HTTPException(status_code=400, detail="challenge_closed")
 
-    # Create agent using configured type
-    agent = create_agent(AGENT_TYPE)
+    # Get the persona from the challenge metadata to select the same agent
+    persona = PersonaType(ch.payload.get("metadata", {}).get("persona", AGENT_DEFAULT_PERSONA))
+    
+    # Create context for agent selection
+    context = AgentContext(
+        locale="pt-BR",
+        mac=ch.mac,
+        router_id=ch.router_id,
+        persona=persona
+    )
+    
+    # Select appropriate agent using router
+    agent = agent_router.select_agent(context)
     validation_result = await agent.validate_answers(ch.payload, [a.dict() for a in body.answers])
 
     if validation_result["correct"]:
