@@ -1,0 +1,14 @@
+[project]
+name = "wifikids-api"
+version = "0.1.0"
+dependencies = [
+  "fastapi",
+  "uvicorn[standard]",
+  "pydantic",
+  "pydantic-settings",
+  "redis",
+  "httpx",
+  "langchain",
+  "langchain-openai",
+  "supabase"
+]

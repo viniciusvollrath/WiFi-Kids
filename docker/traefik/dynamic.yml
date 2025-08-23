@@ -1,0 +1,19 @@
+http:
+  middlewares:
+    redirect-to-https:
+      redirectScheme:
+        scheme: https
+        permanent: true
+    security-headers:
+      headers:
+        stsSeconds: 31536000
+        stsIncludeSubdomains: true
+        stsPreload: true
+
+  routers:
+    traefik-dashboard:
+      rule: Host(`traefik.${BASE_DOMAIN}`)
+      service: api@internal
+      entryPoints: ["websecure"]
+      tls:
+        certResolver: letsencrypt
