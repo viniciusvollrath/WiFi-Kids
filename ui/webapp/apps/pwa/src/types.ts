@@ -161,8 +161,8 @@ export type TimeWindowChecker = (
 // Question-related types for educational challenges
 export interface Question {
   id: string
-  text: string
-  type: 'short' | 'multiple_choice' | 'true_false'
+  prompt: string  // Changed from 'text' to match QuestionCard
+  type: 'short' | 'mc' | 'true_false'  // Changed 'multiple_choice' to 'mc' to match QuestionCard
   options?: string[]
   correct_answer?: string | number | boolean
   answer_len?: number

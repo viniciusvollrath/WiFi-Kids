@@ -71,15 +71,27 @@ export class AgentService {
       return this.decideMock(getCurrentMockContext(), answer)
     }
 
-    return withErrorHandling(async () => {
+    // Try real backend first, fallback to mock on any error
+    try {
+      console.log('[AgentService] Attempting real backend connection...')
+      
       if (!answer) {
         // Step 1: First request - generate challenge (kid clicked "Access Internet")
-        return await this.generateChallenge(timeout)
+        const result = await this.generateChallenge(timeout)
+        console.log('[AgentService] Real backend challenge generation success!')
+        return result
       } else {
         // Step 2: Answer submission - validate answers and get access decision
-        return await this.submitAnswer(answer, timeout)
+        const result = await this.submitAnswer(answer, timeout)
+        console.log('[AgentService] Real backend answer validation success!')
+        return result
       }
-    }, 'network')()
+      
+    } catch (error) {
+      console.warn('[AgentService] Real backend failed, falling back to enhanced mock mode:', error)
+      this.mockMode = true
+      return this.decideMock(getCurrentMockContext(), answer)
+    }
   }
 
   /**
