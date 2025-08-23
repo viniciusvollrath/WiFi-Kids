@@ -2,27 +2,65 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from api.core.db import get_db
-from api.core.settings import SESSION_TTL_SEC
+from api.core.settings import SESSION_TTL_SEC, AGENT_DEFAULT_PERSONA, AGENT_TYPE
 from api.integrations.agent import create_agent
-from api.integrations.types import AgentContext, PersonaType
-from api.repositories.challenges import load_challenge, decrement_attempts, set_status
+from api.integrations.types import AgentContext, PersonaType, SubjectType, DifficultyLevel
+from api.repositories.challenges import load_challenge, decrement_attempts, set_status, create_challenge
 from api.repositories.sessions import create_session
 from api.repositories.commands import enqueue_grant_session
-from api.schemas.challenge import ChallengeAnswerIn, ChallengeApprovedOut, ChallengePendingOut
+from api.schemas.challenge import ChallengeAnswerIn, ChallengeApprovedOut, ChallengePendingOut, ChallengeGenerateIn, ChallengeGenerateOut
 
 router = APIRouter()
 
+@router.post("/challenge/generate", response_model=ChallengeGenerateOut)
+async def generate_challenge(body: ChallengeGenerateIn, db: Session = Depends(get_db)):
+    """Generate a new challenge using the configured agent."""
+    try:
+        # Create agent using configured type
+        agent = create_agent(AGENT_TYPE)
+        
+        # Build context
+        context = AgentContext(
+            locale=body.locale or "pt-BR",
+            mac=body.mac,
+            router_id=body.router_id,
+            persona=PersonaType(body.persona) if body.persona else PersonaType(AGENT_DEFAULT_PERSONA),
+            subject=SubjectType(body.subject) if body.subject else None,
+            difficulty=DifficultyLevel(body.difficulty) if body.difficulty else None,
+            previous_performance=body.previous_performance
+        )
+        
+        # Generate challenge
+        challenge_payload = await agent.generate_challenge(context)
+        
+        # Store challenge in database
+        challenge = create_challenge(
+            db=db,
+            mac=body.mac,
+            router_id=body.router_id,
+            payload=challenge_payload
+        )
+        
+        return ChallengeGenerateOut(
+            challenge_id=challenge.id,
+            questions=challenge_payload["questions"],
+            metadata=challenge_payload["metadata"]
+        )
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to generate challenge: {str(e)}")
+
 @router.post("/challenge/answer", response_model=ChallengeApprovedOut | ChallengePendingOut)
-def challenge_answer(body: ChallengeAnswerIn, db: Session = Depends(get_db)):
+async def challenge_answer(body: ChallengeAnswerIn, db: Session = Depends(get_db)):
     ch = load_challenge(db, body.challenge_id)
     if not ch:
         raise HTTPException(status_code=404, detail="challenge_not_found")
     if ch.status != "open":
         raise HTTPException(status_code=400, detail="challenge_closed")
 
-    # Create agent and validate answers
-    agent = create_agent("mock")  # Will be configurable in PR #2
-    validation_result = agent.validate_answers(ch.payload, [a.dict() for a in body.answers])
+    # Create agent using configured type
+    agent = create_agent(AGENT_TYPE)
+    validation_result = await agent.validate_answers(ch.payload, [a.dict() for a in body.answers])
 
     if validation_result["correct"]:
         set_status(db, ch, "passed")

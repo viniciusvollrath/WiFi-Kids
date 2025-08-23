@@ -1,11 +1,15 @@
 # api/repositories/challenges.py
 from sqlalchemy.orm import Session
 from api.db.models import Challenge
+from api.core.settings import CHALLENGE_ATTEMPTS
 
-def create_challenge(db: Session, mac: str, router_id: str, payload: dict, attempts_left: int) -> Challenge:
+def create_challenge(db: Session, mac: str, router_id: str, payload: dict, attempts_left: int = None) -> Challenge:
     """
     Cria um challenge "open" com payload (perguntas + gabarito) e número de tentativas.
     """
+    if attempts_left is None:
+        attempts_left = CHALLENGE_ATTEMPTS
+    
     ch = Challenge(
         mac=mac,
         router_id=router_id,
