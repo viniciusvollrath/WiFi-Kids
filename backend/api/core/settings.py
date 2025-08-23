@@ -31,5 +31,16 @@ CORS_ORIGINS = _parse_cors(_getenv("CORS_ORIGINS", "https://app.wifikids.com,htt
 # usado pela app; Alembic usa alembic.ini
 DATABASE_URL = _getenv("DATABASE_URL", "sqlite:///./dev.db")
 
+# === OpenAI Configuration ===
+OPENAI_API_KEY = _getenv("OPENAI_API_KEY", "")
+OPENAI_MODEL = _getenv("OPENAI_MODEL", "gpt-4o-mini")
+OPENAI_TEMPERATURE = float(_getenv("OPENAI_TEMPERATURE", "0.3"))
+OPENAI_MAX_TOKENS = _parse_int(_getenv("OPENAI_MAX_TOKENS", "1000"), 1000)
+
+# === Agent Configuration ===
+AGENT_DEFAULT_PERSONA = _getenv("AGENT_DEFAULT_PERSONA", "tutor")
+AGENT_SUBJECTS = _getenv("AGENT_SUBJECTS", "math,history,geography,english,physics").split(",")
+AGENT_FALLBACK_ENABLED = _parse_bool(_getenv("AGENT_FALLBACK_ENABLED", "true"))
+
 # Objetos utilitários já resolvidos
 TZ = ZoneInfo(DEFAULT_TIMEZONE)

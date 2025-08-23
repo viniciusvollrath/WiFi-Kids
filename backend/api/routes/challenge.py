@@ -3,7 +3,8 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from api.core.db import get_db
 from api.core.settings import SESSION_TTL_SEC
-from api.integrations.agent import MockAgent
+from api.integrations.agent import create_agent
+from api.integrations.types import AgentContext, PersonaType
 from api.repositories.challenges import load_challenge, decrement_attempts, set_status
 from api.repositories.sessions import create_session
 from api.repositories.commands import enqueue_grant_session
@@ -19,18 +20,30 @@ def challenge_answer(body: ChallengeAnswerIn, db: Session = Depends(get_db)):
     if ch.status != "open":
         raise HTTPException(status_code=400, detail="challenge_closed")
 
-    agent = MockAgent()
-    passed = agent.check_answers(ch.payload, [a.dict() for a in body.answers])
+    # Create agent and validate answers
+    agent = create_agent("mock")  # Will be configurable in PR #2
+    validation_result = agent.validate_answers(ch.payload, [a.dict() for a in body.answers])
 
-    if passed:
+    if validation_result["correct"]:
         set_status(db, ch, "passed")
         sess = create_session(db, ch.mac, ch.router_id, ttl_sec=SESSION_TTL_SEC)
         enqueue_grant_session(db, ch.router_id, ch.mac, SESSION_TTL_SEC)
-        return ChallengeApprovedOut(decision="ALLOW", allowed_minutes=SESSION_TTL_SEC//60, session_id=sess.id)
+        return ChallengeApprovedOut(
+            decision="ALLOW", 
+            allowed_minutes=SESSION_TTL_SEC//60, 
+            session_id=sess.id,
+            feedback=validation_result.get("feedback")
+        )
 
-    # errou -> decrementa
+    # Wrong answer -> decrement attempts
     decrement_attempts(db, ch)
     reason = "wrong_answer"
     if ch.attempts_left <= 0:
         set_status(db, ch, "failed")
-    return ChallengePendingOut(decision="DENY", attempts_left=ch.attempts_left, reason=reason)
+    
+    return ChallengePendingOut(
+        decision="DENY", 
+        attempts_left=ch.attempts_left, 
+        reason=reason,
+        feedback=validation_result.get("feedback")
+    )
