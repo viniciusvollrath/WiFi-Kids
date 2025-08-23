@@ -36,6 +36,7 @@ export interface DecisionResponse {
   allowed_minutes: number
   question_pt: string | null
   question_en: string | null
+  questions?: Question[]
   metadata: {
     reason: string
     persona: 'tutor' | 'maternal' | 'general'
@@ -82,6 +83,8 @@ export interface ChatPanelProps {
   onSend: (message: string) => void
   onRetry: () => void
   locale: Locale
+  questions?: Question[]
+  onAnswersSubmit?: (answers: Record<string, string>) => void
 }
 
 // Language toggle props interface
@@ -154,3 +157,26 @@ export type TimeWindowChecker = (
   end: string,
   timezone: string
 ) => boolean
+
+// Question-related types for educational challenges
+export interface Question {
+  id: string
+  text: string
+  type: 'short' | 'multiple_choice' | 'true_false'
+  options?: string[]
+  correct_answer?: string | number | boolean
+  answer_len?: number
+  difficulty: 'easy' | 'medium' | 'hard'
+  subject: string
+}
+
+// Answer input props interface
+export interface AnswerInputProps {
+  mode: 'chat' | 'questions'
+  questions?: Question[]
+  onSend: (message: string) => void
+  onAnswersSubmit: (answers: Record<string, string>) => void
+  disabled?: boolean
+  locale: 'pt' | 'en'
+  loading?: boolean
+}

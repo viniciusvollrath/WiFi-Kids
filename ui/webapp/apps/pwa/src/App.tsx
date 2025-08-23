@@ -1,6 +1,6 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react'
 import { t } from './i18n'
-import { Locale, AppState, BilingualContent } from './types'
+import { Locale, AppState, BilingualContent, Question } from './types'
 import { LanguageToggle, ChatPanel, SimulationBadge } from './components'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { checkBrowserSupport, logError, createAppError } from './utils/errorHandling'
@@ -19,6 +19,7 @@ export default function App() {
   const [messages, setMessages] = useState(messageStore.messages)
   const [ctaDisabledUntil, setCtaDisabledUntil] = useState<number>(0)
   const [browserSupported, setBrowserSupported] = useState(true)
+  const [currentQuestions, setCurrentQuestions] = useState<Question[]>([])
   
   const i = useMemo(() => t(locale), [locale])
   const uiConfig = useMemo(() => getStateUIConfig(appState), [appState])
@@ -76,6 +77,9 @@ export default function App() {
     try {
       // Request decision from agent service
       const response = await agentService.requestDecision()
+      
+      // Store questions if present
+      setCurrentQuestions(response.questions || [])
       
       // Add agent response message
       const responseContent: BilingualContent = {
@@ -138,6 +142,9 @@ export default function App() {
       // Send message as answer to agent service
       const response = await agentService.requestDecision({ answer: message })
       
+      // Store questions if present
+      setCurrentQuestions(response.questions || [])
+      
       // Add agent response
       const responseContent: BilingualContent = {
         pt: response.message_pt,
@@ -183,6 +190,7 @@ export default function App() {
     chatStateMachine.reset()
     setMessages([])
     setCtaDisabledUntil(0)
+    setCurrentQuestions([])
   }, [])
 
   // Handle language change - update document lang and preserve chat
@@ -338,6 +346,16 @@ export default function App() {
                   onSend={handleSendMessage}
                   onRetry={handleRetry}
                   locale={locale}
+                  questions={currentQuestions}
+                  onAnswersSubmit={(answers) => {
+                    const formattedAnswers = JSON.stringify(
+                      Object.keys(answers).map(questionId => ({
+                        id: questionId,
+                        value: answers[questionId]
+                      }))
+                    )
+                    handleSendMessage(formattedAnswers)
+                  }}
                 />
               </ErrorBoundary>
             </div>
