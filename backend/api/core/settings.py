@@ -43,5 +43,10 @@ AGENT_DEFAULT_PERSONA = _getenv("AGENT_DEFAULT_PERSONA", "tutor")
 AGENT_SUBJECTS = _getenv("AGENT_SUBJECTS", "math,history,geography,english,physics").split(",")
 AGENT_FALLBACK_ENABLED = _parse_bool(_getenv("AGENT_FALLBACK_ENABLED", "true"))
 
+# === Router Configuration ===
+ROUTER_ENABLED = _parse_bool(_getenv("ROUTER_ENABLED", "true"))
+ROUTER_PREFER_LLM = _getenv("ROUTER_PREFER_LLM", "openai")  # "openai", "anthropic", "google"
+ROUTER_FALLBACK_TO_MOCK = _parse_bool(_getenv("ROUTER_FALLBACK_TO_MOCK", "true"))
+
 # Objetos utilitários já resolvidos
 TZ = ZoneInfo(DEFAULT_TIMEZONE)
