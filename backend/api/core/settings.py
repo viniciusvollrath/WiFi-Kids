@@ -2,6 +2,10 @@
 import os
 from typing import List
 from zoneinfo import ZoneInfo
+from dotenv import load_dotenv
+
+# Load environment variables from .env file
+load_dotenv()
 
 def _getenv(name: str, default: str) -> str:
     v = os.getenv(name)
