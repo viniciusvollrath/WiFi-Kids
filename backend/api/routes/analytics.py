@@ -12,6 +12,7 @@ from api.schemas.analytics import (
     ChallengeAnalyticsOut,
     AgentPerformanceOut,
     SystemAnalyticsOut,
+    SystemMetricsOut,
     AnalyticsFilterIn,
     PerformanceUpdateIn,
     LearningPathUpdateIn,

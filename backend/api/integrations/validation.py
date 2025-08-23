@@ -151,6 +151,9 @@ class AnswerValidator:
     
     def _normalize_answer(self, answer: str, config: ValidationConfig) -> str:
         """Normalize answer based on configuration."""
+        if answer is None:
+            return ""
+        
         normalized = answer.strip()
         
         if not config.case_sensitive:
@@ -206,7 +209,13 @@ class AnswerValidator:
         intersection = student_chars.intersection(correct_chars)
         union = student_chars.union(correct_chars)
         
-        return len(intersection) / len(union)
+        jaccard_similarity = len(intersection) / len(union)
+        
+        # Also consider length similarity for short answers
+        length_similarity = 1.0 - abs(len(student_answer) - len(correct_answer)) / max(len(student_answer), len(correct_answer), 1)
+        
+        # Weighted combination
+        return 0.7 * jaccard_similarity + 0.3 * length_similarity
     
     def _semantic_match_score(self, student_answer: str, correct_answer: str, subject: SubjectType) -> float:
         """Calculate semantic similarity score."""
@@ -301,72 +310,38 @@ class AnswerValidator:
         student_answer: str, 
         correct_answer: str, 
         score: float, 
-        config: ValidationConfig, 
+        config: ValidationConfig,
         persona: PersonaType, 
         subject: SubjectType
     ) -> str:
         """Generate encouraging feedback for incorrect answers."""
+        base_feedback = ""
         
-        if score > 0.5:
-            # Close answer
-            feedback_templates = {
-                PersonaType.TUTOR: [
-                    "You're very close! Think about {hint}.",
-                    "Almost there! Consider {hint}.",
-                    "Good thinking! You just need to {hint}."
-                ],
-                PersonaType.MATERNAL: [
-                    "You're almost there, sweetie! Try thinking about {hint}.",
-                    "So close! Maybe think about {hint}.",
-                    "You're doing great! Just remember {hint}."
-                ],
-                PersonaType.GENERAL: [
-                    "Close! Try thinking about {hint}.",
-                    "Almost! Consider {hint}.",
-                    "Good effort! Think about {hint}."
-                ]
-            }
+        if persona == PersonaType.MATERNAL:
+            base_feedback = "Não se preocupe, vamos tentar novamente. "
+        elif persona == PersonaType.TUTOR:
+            base_feedback = "Vamos revisar isso juntos. "
+        else:  # GENERAL
+            base_feedback = "Let me help you understand this better. "
+        
+        # Add hint or explanation
+        if question.get("explanation"):
+            base_feedback += f"{question['explanation']}"
         else:
-            # Need more help
-            feedback_templates = {
-                PersonaType.TUTOR: [
-                    "Let's review this together. {explanation}",
-                    "This is a tricky one. {explanation}",
-                    "Let me help you understand. {explanation}"
-                ],
-                PersonaType.MATERNAL: [
-                    "Don't worry, let's work on this together. {explanation}",
-                    "It's okay to find this challenging. {explanation}",
-                    "Let me help you understand this better. {explanation}"
-                ],
-                PersonaType.GENERAL: [
-                    "Let's work on this. {explanation}",
-                    "This needs some practice. {explanation}",
-                    "Here's how to think about it: {explanation}"
-                ]
-            }
+            base_feedback += f"The correct answer is '{correct_answer}'. Keep practicing!"
         
-        templates = feedback_templates.get(persona, feedback_templates[PersonaType.GENERAL])
-        template = random.choice(templates)
-        
-        # Generate hint or explanation based on question
-        hint = self._generate_hint(question, correct_answer, subject)
-        explanation = self._generate_simple_explanation(question, correct_answer, subject)
-        
-        return template.format(hint=hint, explanation=explanation)
-    
+        return base_feedback
+
     def _generate_hint(self, question: Question, correct_answer: str, subject: SubjectType) -> str:
-        """Generate a helpful hint based on the question."""
-        if subject == SubjectType.MATH:
-            return "the mathematical operation or formula"
+        """Generate a hint for the question."""
+        if subject == SubjectType.GEOGRAPHY:
+            return "Dica: pense na localização ou característica geográfica"
+        elif subject == SubjectType.MATH:
+            return "Dica: verifique os cálculos passo a passo"
         elif subject == SubjectType.HISTORY:
-            return "the time period or historical figure"
-        elif subject == SubjectType.GEOGRAPHY:
-            return "the location or geographical feature"
-        elif subject == SubjectType.SCIENCE:
-            return "the scientific concept or process"
+            return "Dica: lembre-se do período histórico"
         else:
-            return "the key concept"
+            return "Dica: revise o conteúdo estudado"
     
     def _generate_simple_explanation(self, question: Question, correct_answer: str, subject: SubjectType) -> str:
         """Generate a simple explanation."""
@@ -381,14 +356,14 @@ class AnswerValidator:
         correct_answer: str, 
         score: float, 
         correct: bool, 
-        config: ValidationConfig, 
+        config: ValidationConfig,
         subject: SubjectType
     ) -> str:
-        """Generate detailed explanation."""
+        """Generate explanation for the answer."""
         if correct:
-            return f"Score: {score:.2f}/1.0 - Perfect!"
+            return f"Score: {score:.2f}/1.0 - Perfect! Explicação: {question.get('explanation', 'Resposta correta!')}"
         else:
-            return f"Score: {score:.2f}/1.0 - The correct answer was '{correct_answer}'"
+            return f"Score: {score:.2f}/1.0 (threshold: {config.score_threshold}) - {question.get('explanation', 'Resposta incorreta.')}"
 
 # Global validator instance
 answer_validator = AnswerValidator()
