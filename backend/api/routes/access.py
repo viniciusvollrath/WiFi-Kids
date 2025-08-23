@@ -24,7 +24,7 @@ def access_request(body: AccessRequest, db: Session = Depends(get_db)):
     now = datetime.now(timezone.utc)
     from api.core.timewin import is_within_window
     if not is_within_window(now, ACCESS_WINDOWS, TZ):
-        return AccessDeniedOut(allowed=False, reason="outside_schedule")
+        return AccessDeniedOut(decision="DENY", reason="outside_schedule")
 
     # 2) Upsert do device
     upsert_device(db, mac, rid)
@@ -43,4 +43,4 @@ def access_request(body: AccessRequest, db: Session = Depends(get_db)):
     # 4) Caso contrário, libera direto
     sess = create_session(db, mac, rid, ttl_sec=SESSION_TTL_SEC)
     enqueue_grant_session(db, rid, mac, SESSION_TTL_SEC)
-    return AccessApprovedOut(allowed=True, ttl_sec=SESSION_TTL_SEC, session_id=sess.id)
+    return AccessApprovedOut(decision="ALLOW", allowed_minutes=SESSION_TTL_SEC//60, session_id=sess.id)

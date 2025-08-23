@@ -10,7 +10,7 @@ function parseWindows(s: string | undefined) {
 }
 
 export function buildPolicyFromEnv() {
-  const persona = process.env.POLICY_PERSONA || 'tutor'
+  const persona = process.env.WFK_PERSONA || 'tutor'
   const daily = Number(process.env.POLICY_DAILY_MAX || 120)
   const quotasStr = process.env.POLICY_PERIOD_QUOTAS || 'morning:30,afternoon:45,night:30'
   const quota: any = {}
