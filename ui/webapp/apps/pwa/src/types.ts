@@ -36,6 +36,7 @@ export interface DecisionResponse {
   allowed_minutes: number
   question_pt: string | null
   question_en: string | null
+  questions?: Question[]
   metadata: {
     reason: string
     persona: 'tutor' | 'maternal' | 'general'
@@ -82,6 +83,8 @@ export interface ChatPanelProps {
   onSend: (message: string) => void
   onRetry: () => void
   locale: Locale
+  questions?: Question[]
+  onAnswersSubmit?: (answers: Record<string, string>) => void
 }
 
 // Language toggle props interface
@@ -154,3 +157,61 @@ export type TimeWindowChecker = (
   end: string,
   timezone: string
 ) => boolean
+
+// Question-related types for educational challenges
+export interface Question {
+  id: string
+  text: string
+  type: 'short' | 'multiple_choice' | 'true_false'
+  options?: string[]
+  correct_answer?: string | number | boolean
+  answer_len?: number
+  difficulty: 'easy' | 'medium' | 'hard'
+  subject: string
+}
+
+// Answer input props interface
+export interface AnswerInputProps {
+  mode: 'chat' | 'questions'
+  questions?: Question[]
+  onSend: (message: string) => void
+  onAnswersSubmit: (answers: Record<string, string>) => void
+  disabled?: boolean
+  locale: 'pt' | 'en'
+  loading?: boolean
+}
+
+// Challenge state management types
+export type ChallengeState = 'none' | 'active' | 'answering' | 'validating' | 'completed' | 'failed'
+
+export interface Challenge {
+  id: string
+  questions: Question[]
+  startTime: number
+  maxAttempts: number
+  currentAttempt: number
+  status: ChallengeState
+  metadata?: {
+    difficulty: 'easy' | 'medium' | 'hard'
+    subject: string
+    estimatedTime: number
+  }
+}
+
+export interface ChallengeProgress {
+  challengeId: string
+  answeredQuestions: Record<string, string>
+  totalQuestions: number
+  completedQuestions: number
+  timeSpent: number
+  score?: number
+}
+
+export interface ChallengeResult {
+  challengeId: string
+  success: boolean
+  score: number
+  feedback: BilingualContent
+  timeSpent: number
+  attempts: number
+}
