@@ -5,6 +5,7 @@
  */
 
 import { Challenge, ChallengeState, ChallengeProgress, ChallengeResult, Question } from '../types'
+import { config } from './config'
 
 type ChallengeStateChangeListener = (challenge: Challenge | null, progress: ChallengeProgress | null) => void
 
@@ -18,7 +19,7 @@ class ChallengeStore {
   createChallenge(
     id: string,
     questions: Question[],
-    maxAttempts: number = 3,
+    maxAttempts: number = config.getMaxAttempts(),
     metadata?: Challenge['metadata']
   ): Challenge {
     const challenge: Challenge = {

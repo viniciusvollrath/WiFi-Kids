@@ -3,14 +3,22 @@ import { t } from './i18n'
 import { Locale, AppState, BilingualContent, Question, Challenge, ChallengeProgress as ChallengeProgressType } from './types'
 import { LanguageToggle, ChatPanel, SimulationBadge } from './components'
 import { ChallengeProgress } from './components/ChallengeProgress'
+import { PersonaSelector } from './components/PersonaSelector'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { checkBrowserSupport, logError, createAppError } from './utils/errorHandling'
 import { agentService } from './services/agentService'
 import { messageStore } from './services/messageStore'
 import { chatStateMachine, getStateUIConfig } from './services/stateMachine'
 import { challengeStore } from './services/challengeStore'
+import { config } from './services/config'
 
 const inferLocale = (): Locale => {
+  // Use configured default locale if available, otherwise infer from browser
+  const configuredLocale = config.getDefaultLocale()
+  if (configuredLocale) {
+    return configuredLocale
+  }
+  
   const lang = navigator.language.toLowerCase()
   return lang.startsWith('pt') ? 'pt' : 'en'
 }
@@ -24,6 +32,7 @@ export default function App() {
   const [currentQuestions, setCurrentQuestions] = useState<Question[]>([])
   const [currentChallenge, setCurrentChallenge] = useState<Challenge | null>(null)
   const [challengeProgress, setChallengeProgress] = useState<ChallengeProgressType | null>(null)
+  const [currentPersona, setCurrentPersona] = useState<'tutor' | 'maternal' | 'general'>(config.getDefaultPersona())
   
   const i = useMemo(() => t(locale), [locale])
   const uiConfig = useMemo(() => getStateUIConfig(appState), [appState])
@@ -241,6 +250,17 @@ export default function App() {
     setMessages([...messageStore.messages])
   }, [])
 
+  // Handle persona change
+  const handlePersonaChange = useCallback((persona: 'tutor' | 'maternal' | 'general') => {
+    setCurrentPersona(persona)
+    agentService.setPersona(persona)
+    
+    // Log the change for debugging if enabled
+    if (config.shouldShowDebugInfo()) {
+      console.log(`[App] Persona changed to: ${persona}`)
+    }
+  }, [])
+
   useEffect(() => {
     // Set initial document language
     document.documentElement.lang = locale
@@ -282,6 +302,29 @@ export default function App() {
         locale={locale}
       />
       
+      {/* Debug Information - shown if enabled */}
+      {config.shouldShowDebugInfo() && (
+        <div style={{
+          position: 'fixed',
+          top: 10,
+          left: 10,
+          background: 'rgba(0, 0, 0, 0.8)',
+          color: 'white',
+          padding: '8px',
+          borderRadius: '4px',
+          fontSize: '12px',
+          fontFamily: 'monospace',
+          zIndex: 9999
+        }}>
+          <div>Version: {config.getVersion()}</div>
+          <div>Mode: {config.isDevelopment() ? 'dev' : 'prod'}</div>
+          <div>Mock: {config.isMockMode() ? 'ON' : 'OFF'}</div>
+          <div>API: {config.getApiUrl()}</div>
+          <div>Persona: {currentPersona}</div>
+          <div>State: {appState}</div>
+        </div>
+      )}
+      
       <div className="container">
         <div className="card">
           {/* Header with title and language toggle */}
@@ -305,6 +348,16 @@ export default function App() {
           }}>
             {i.subtitle}
           </p>
+
+          {/* Persona Selector - shown if enabled in config */}
+          {config.shouldShowPersonaSelector() && (
+            <PersonaSelector
+              currentPersona={currentPersona}
+              onPersonaChange={handlePersonaChange}
+              locale={locale}
+              disabled={appState === 'REQUESTING'}
+            />
+          )}
 
           {/* Access Internet CTA */}
           <button

@@ -5,6 +5,7 @@
 
 import { DecisionResponse, RequestOptions } from '../types'
 import { decideMock, getCurrentMockContext, isValidDecisionResponse } from './mockService'
+import { config } from './config'
 import { 
   createAppError, 
   isNetworkError, 
@@ -15,10 +16,6 @@ import {
   createRetryHandler
 } from '../utils/errorHandling'
 
-// Default configuration
-const DEFAULT_TIMEOUT = 10000 // 10 seconds (LLM calls take longer)
-const DEFAULT_BACKEND_URL = 'http://localhost:8000' // WiFi-Kids API
-
 /**
  * AgentService class that handles backend communication with automatic fallback to mock mode
  */
@@ -28,12 +25,15 @@ export class AgentService {
   private deviceId: string
   private routerId: string
   private currentChallenge: any = null
+  private defaultPersona: 'tutor' | 'maternal' | 'general'
 
   constructor(backendUrl?: string) {
-    this.backendUrl = backendUrl || DEFAULT_BACKEND_URL
-    this.mockMode = import.meta.env.VITE_MOCK === '1' || import.meta.env.VITE_MOCK === 'true'
+    const appConfig = config.get()
+    this.backendUrl = backendUrl || appConfig.apiUrl
+    this.mockMode = appConfig.mockMode
     this.deviceId = this.generateDeviceMAC()
-    this.routerId = 'pwa-router' // Default router ID for PWA
+    this.routerId = appConfig.routerId
+    this.defaultPersona = appConfig.defaultPersona
     
     if (this.mockMode) {
       console.warn('[AgentService] Mock mode enabled via VITE_MOCK environment variable')
@@ -63,7 +63,7 @@ export class AgentService {
    * Automatically falls back to mock mode on timeout or error
    */
   async requestDecision(options: RequestOptions = {}): Promise<DecisionResponse> {
-    const { answer, timeout = DEFAULT_TIMEOUT } = options
+    const { answer, timeout = config.getApiTimeout() } = options
 
     // If already in mock mode, use mock directly
     if (this.mockMode) {
@@ -93,7 +93,7 @@ export class AgentService {
       mac: this.deviceId,
       router_id: this.routerId,
       locale: this.getCurrentLocale() === 'pt' ? 'pt-BR' : 'en-US',
-      persona: 'tutor', // Default persona, can be made configurable later
+      persona: this.defaultPersona,
     }
 
     console.log('[AgentService] Generating challenge:', {
@@ -421,6 +421,25 @@ export class AgentService {
    */
   setBackendUrl(url: string): void {
     this.backendUrl = url
+  }
+
+  /**
+   * Gets the current persona
+   */
+  getCurrentPersona(): 'tutor' | 'maternal' | 'general' {
+    return this.defaultPersona
+  }
+
+  /**
+   * Sets the persona for future requests
+   */
+  setPersona(persona: 'tutor' | 'maternal' | 'general'): void {
+    if (config.isValidPersona(persona)) {
+      this.defaultPersona = persona
+      console.log(`[AgentService] Persona changed to: ${persona}`)
+    } else {
+      console.warn(`[AgentService] Invalid persona: ${persona}`)
+    }
   }
 
   /**
