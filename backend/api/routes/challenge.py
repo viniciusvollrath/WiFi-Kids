@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 from api.core.db import get_db
 from api.core.settings import SESSION_TTL_SEC, AGENT_DEFAULT_PERSONA
 from api.integrations.router import agent_router
+from api.integrations.validation import answer_validator
 from api.integrations.types import AgentContext, PersonaType, SubjectType, DifficultyLevel
 from api.repositories.challenges import load_challenge, decrement_attempts, set_status, create_challenge
 from api.repositories.sessions import create_session
@@ -31,6 +32,54 @@ async def get_persona_policy(persona: str):
         return {"persona": persona, "policy": policy}
     except ValueError:
         raise HTTPException(status_code=400, detail=f"Invalid persona: {persona}")
+
+@router.post("/validation/test")
+async def test_validation(
+    question: dict,
+    student_answer: str,
+    correct_answer: str,
+    persona: str = "general",
+    subject: str = "math"
+):
+    """Test the validation system with custom inputs."""
+    try:
+        persona_enum = PersonaType(persona)
+        subject_enum = SubjectType(subject)
+        
+        # Create a mock question structure
+        question_obj = {
+            "id": "test",
+            "type": "mc",
+            "prompt": question.get("prompt", "Test question?"),
+            "options": question.get("options", []),
+            "answer_len": question.get("answer_len"),
+            "subject": subject_enum,
+            "difficulty": DifficultyLevel.EASY,
+            "explanation": question.get("explanation", "")
+        }
+        
+        # Test validation
+        result = answer_validator.validate_answer(
+            question=question_obj,
+            student_answer=student_answer,
+            correct_answer=correct_answer,
+            persona=persona_enum,
+            subject=subject_enum
+        )
+        
+        return {
+            "question": question_obj,
+            "student_answer": student_answer,
+            "correct_answer": correct_answer,
+            "persona": persona,
+            "subject": subject,
+            "validation_result": result
+        }
+        
+    except ValueError as e:
+        raise HTTPException(status_code=400, detail=f"Invalid input: {str(e)}")
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Validation error: {str(e)}")
 
 @router.post("/challenge/generate", response_model=ChallengeGenerateOut)
 async def generate_challenge(body: ChallengeGenerateIn, db: Session = Depends(get_db)):

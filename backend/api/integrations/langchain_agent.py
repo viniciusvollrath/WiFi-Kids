@@ -24,6 +24,7 @@ from api.integrations.types import (
     DifficultyLevel,
     Question
 )
+from api.integrations.validation import answer_validator
 from utils.logger import agent_logger
 
 class LangChainAgent:
@@ -210,13 +211,17 @@ class LangChainAgent:
             raise
     
     async def validate_answers(self, payload: ChallengePayload, answers: List[Answer]) -> ValidationResult:
-        """Validate student answers using AI-powered evaluation."""
+        """Validate student answers using enhanced validation system."""
         try:
-            agent_logger.info(f"Validating {len(answers)} answers with LangChain")
+            agent_logger.info(f"Validating {len(answers)} answers with enhanced validation")
             
             total_score = 0.0
             total_questions = len(payload["questions"])
             feedback_messages = []
+            
+            # Get persona and subject from metadata
+            persona = PersonaType(payload.get("metadata", {}).get("persona", "general"))
+            subject = SubjectType(payload.get("metadata", {}).get("subject", "math"))
             
             for answer in answers:
                 # Find the corresponding question
@@ -224,33 +229,42 @@ class LangChainAgent:
                 if not question:
                     continue
                 
-                # Validate individual answer
-                validation_chain = self.validation_prompt | self.llm | self.output_parser
+                # Use enhanced validation
+                validation_result = answer_validator.validate_answer(
+                    question=question,
+                    student_answer=answer["value"],
+                    correct_answer=payload["answer_key"].get(answer["id"], ""),
+                    persona=persona,
+                    subject=subject
+                )
                 
-                validation_response = await validation_chain.ainvoke({
-                    "question_prompt": question["prompt"],
-                    "correct_answer": payload["answer_key"].get(answer["id"], ""),
-                    "student_answer": answer["value"]
-                })
-                
-                total_score += validation_response.get("score", 0.0)
-                if validation_response.get("feedback"):
-                    feedback_messages.append(validation_response["feedback"])
+                total_score += validation_result["score"]
+                if validation_result.get("feedback"):
+                    feedback_messages.append(validation_result["feedback"])
             
             # Calculate overall score
             final_score = total_score / total_questions if total_questions > 0 else 0.0
-            correct = final_score >= 0.8  # 80% threshold
+            
+            # Determine if overall challenge is passed
+            # Use persona-specific threshold
+            threshold_map = {
+                PersonaType.TUTOR: 0.8,
+                PersonaType.MATERNAL: 0.7,
+                PersonaType.GENERAL: 0.75
+            }
+            threshold = threshold_map.get(persona, 0.75)
+            correct = final_score >= threshold
             
             # Combine feedback
             combined_feedback = " ".join(feedback_messages) if feedback_messages else (
-                "Good Job! You got it!" if correct else "Almost there! Try again!"
+                "Parabéns! Você acertou!" if correct else "Tente novamente!"
             )
             
             return {
                 "correct": correct,
                 "score": final_score,
                 "feedback": combined_feedback,
-                "explanation": f"Score: {final_score:.2f}/1.0"
+                "explanation": f"Score: {final_score:.2f}/1.0 (threshold: {threshold})"
             }
             
         except Exception as e:
@@ -259,7 +273,7 @@ class LangChainAgent:
             return self._fallback_validation(payload, answers)
     
     def _fallback_validation(self, payload: ChallengePayload, answers: List[Answer]) -> ValidationResult:
-        """Fallback validation when AI validation fails."""
+        """Fallback validation when enhanced validation fails."""
         agent_logger.warning("Using fallback validation")
         
         key = payload.get("answer_key", {})
@@ -276,6 +290,6 @@ class LangChainAgent:
         return {
             "correct": correct,
             "score": score,
-            "feedback": f"You got {correct_count} out of {total_questions} questions right.",
-            "explanation": "Good job!" if correct else "Try again!"
+            "feedback": f"Você acertou {correct_count} de {total_questions} questões.",
+            "explanation": "Parabéns!" if correct else "Tente novamente!"
         }
