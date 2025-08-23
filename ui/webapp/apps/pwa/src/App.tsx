@@ -1,12 +1,14 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react'
 import { t } from './i18n'
-import { Locale, AppState, BilingualContent, Question } from './types'
+import { Locale, AppState, BilingualContent, Question, Challenge, ChallengeProgress as ChallengeProgressType } from './types'
 import { LanguageToggle, ChatPanel, SimulationBadge } from './components'
+import { ChallengeProgress } from './components/ChallengeProgress'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { checkBrowserSupport, logError, createAppError } from './utils/errorHandling'
 import { agentService } from './services/agentService'
 import { messageStore } from './services/messageStore'
 import { chatStateMachine, getStateUIConfig } from './services/stateMachine'
+import { challengeStore } from './services/challengeStore'
 
 const inferLocale = (): Locale => {
   const lang = navigator.language.toLowerCase()
@@ -20,6 +22,8 @@ export default function App() {
   const [ctaDisabledUntil, setCtaDisabledUntil] = useState<number>(0)
   const [browserSupported, setBrowserSupported] = useState(true)
   const [currentQuestions, setCurrentQuestions] = useState<Question[]>([])
+  const [currentChallenge, setCurrentChallenge] = useState<Challenge | null>(null)
+  const [challengeProgress, setChallengeProgress] = useState<ChallengeProgressType | null>(null)
   
   const i = useMemo(() => t(locale), [locale])
   const uiConfig = useMemo(() => getStateUIConfig(appState), [appState])
@@ -41,6 +45,16 @@ export default function App() {
       if (newState === 'ALLOW') {
         setCtaDisabledUntil(Date.now() + 2000)
       }
+    })
+    
+    return unsubscribe
+  }, [])
+
+  // Handle challenge state changes
+  useEffect(() => {
+    const unsubscribe = challengeStore.onStateChange((challenge, progress) => {
+      setCurrentChallenge(challenge)
+      setChallengeProgress(progress)
     })
     
     return unsubscribe
@@ -78,8 +92,19 @@ export default function App() {
       // Request decision from agent service
       const response = await agentService.requestDecision()
       
-      // Store questions if present
-      setCurrentQuestions(response.questions || [])
+      // Store questions and create challenge if present
+      const questions = response.questions || []
+      setCurrentQuestions(questions)
+      
+      if (questions.length > 0) {
+        // Create a new challenge
+        const challengeId = `challenge_${Date.now()}`
+        challengeStore.createChallenge(challengeId, questions, 3, {
+          difficulty: 'medium',
+          subject: 'general',
+          estimatedTime: questions.length * 60
+        })
+      }
       
       // Add agent response message
       const responseContent: BilingualContent = {
@@ -142,8 +167,21 @@ export default function App() {
       // Send message as answer to agent service
       const response = await agentService.requestDecision({ answer: message })
       
-      // Store questions if present
-      setCurrentQuestions(response.questions || [])
+      // Store questions and update challenge if present
+      const questions = response.questions || []
+      setCurrentQuestions(questions)
+      
+      if (questions.length > 0) {
+        // Create a new challenge if not already active
+        if (!challengeStore.getCurrentChallenge()) {
+          const challengeId = `challenge_${Date.now()}`
+          challengeStore.createChallenge(challengeId, questions, 3, {
+            difficulty: 'medium',
+            subject: 'general',
+            estimatedTime: questions.length * 60
+          })
+        }
+      }
       
       // Add agent response
       const responseContent: BilingualContent = {
@@ -191,6 +229,7 @@ export default function App() {
     setMessages([])
     setCtaDisabledUntil(0)
     setCurrentQuestions([])
+    challengeStore.clearChallenge()
   }, [])
 
   // Handle language change - update document lang and preserve chat
@@ -339,6 +378,15 @@ export default function App() {
                   </div>
                 }
               >
+                {/* Challenge Progress - shown when challenge is active */}
+                {currentChallenge && challengeProgress && (
+                  <ChallengeProgress 
+                    challenge={currentChallenge}
+                    progress={challengeProgress}
+                    locale={locale}
+                  />
+                )}
+                
                 <ChatPanel
                   state={appState}
                   messages={messages}
@@ -348,13 +396,23 @@ export default function App() {
                   locale={locale}
                   questions={currentQuestions}
                   onAnswersSubmit={(answers) => {
-                    const formattedAnswers = JSON.stringify(
-                      Object.keys(answers).map(questionId => ({
-                        id: questionId,
-                        value: answers[questionId]
-                      }))
-                    )
-                    handleSendMessage(formattedAnswers)
+                    // Update challenge progress
+                    Object.keys(answers).forEach(questionId => {
+                      challengeStore.answerQuestion(questionId, answers[questionId])
+                    })
+                    
+                    // Submit answers through challenge store
+                    const submittedAnswers = challengeStore.submitAnswers()
+                    
+                    if (submittedAnswers) {
+                      const formattedAnswers = JSON.stringify(
+                        Object.keys(submittedAnswers).map(questionId => ({
+                          id: questionId,
+                          value: submittedAnswers[questionId]
+                        }))
+                      )
+                      handleSendMessage(formattedAnswers)
+                    }
                   }}
                 />
               </ErrorBoundary>

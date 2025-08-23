@@ -180,3 +180,38 @@ export interface AnswerInputProps {
   locale: 'pt' | 'en'
   loading?: boolean
 }
+
+// Challenge state management types
+export type ChallengeState = 'none' | 'active' | 'answering' | 'validating' | 'completed' | 'failed'
+
+export interface Challenge {
+  id: string
+  questions: Question[]
+  startTime: number
+  maxAttempts: number
+  currentAttempt: number
+  status: ChallengeState
+  metadata?: {
+    difficulty: 'easy' | 'medium' | 'hard'
+    subject: string
+    estimatedTime: number
+  }
+}
+
+export interface ChallengeProgress {
+  challengeId: string
+  answeredQuestions: Record<string, string>
+  totalQuestions: number
+  completedQuestions: number
+  timeSpent: number
+  score?: number
+}
+
+export interface ChallengeResult {
+  challengeId: string
+  success: boolean
+  score: number
+  feedback: BilingualContent
+  timeSpent: number
+  attempts: number
+}
