@@ -330,6 +330,16 @@ class AnalyticsRepository:
             )
             self.db.add(agent_perf)
         
+        # Ensure fields are not None (null-safe initialization)
+        if agent_perf.total_challenges_generated is None:
+            agent_perf.total_challenges_generated = 0
+        if agent_perf.successful_validations is None:
+            agent_perf.successful_validations = 0
+        if agent_perf.failed_validations is None:
+            agent_perf.failed_validations = 0
+        if agent_perf.average_response_time is None:
+            agent_perf.average_response_time = 0.0
+        
         # Update metrics
         agent_perf.total_challenges_generated += 1
         if performance_data.get("successful"):
