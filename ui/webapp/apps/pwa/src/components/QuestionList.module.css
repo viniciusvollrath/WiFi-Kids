@@ -1,0 +1,209 @@
+/* Question List Container */
+.questionList {
+  background: var(--color-background, #ffffff);
+  border-radius: var(--radius-lg, 12px);
+  overflow: hidden;
+}
+
+/* Progress Header */
+.progressHeader {
+  background: var(--color-primary-lightest, #faf5ff);
+  border: 1px solid var(--color-primary-light, #ddd6fe);
+  padding: var(--spacing-lg, 24px);
+  border-bottom: 1px solid var(--color-border-light, #e2e8f0);
+}
+
+.questionsTitle {
+  font-size: var(--font-size-xl, 1.25rem);
+  font-weight: 700;
+  color: var(--color-primary-dark, #5b21b6);
+  margin: 0 0 var(--spacing-md, 16px) 0;
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm, 8px);
+}
+
+.questionsTitle::before {
+  content: '🎓';
+  font-size: var(--font-size-lg, 1.125rem);
+}
+
+.progressIndicator {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md, 16px);
+}
+
+.progressText {
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: 600;
+  color: var(--color-primary, #7c3aed);
+  white-space: nowrap;
+}
+
+.progressBar {
+  flex: 1;
+  height: 8px;
+  background: var(--color-border-light, #e2e8f0);
+  border-radius: var(--radius-full, 9999px);
+  overflow: hidden;
+  position: relative;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-primary, #7c3aed), var(--color-primary-light, #a78bfa));
+  border-radius: inherit;
+  transition: width var(--duration-normal, 0.2s) ease;
+  position: relative;
+}
+
+.progressFill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+  animation: shimmer 1.5s infinite;
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+/* Questions Container */
+.questions {
+  padding: var(--spacing-lg, 24px);
+}
+
+/* Completion Status */
+.completionStatus {
+  background: var(--color-background-muted, #f8fafc);
+  border-top: 1px solid var(--color-border-light, #e2e8f0);
+  padding: var(--spacing-lg, 24px);
+}
+
+.allAnswered {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md, 16px);
+  padding: var(--spacing-md, 16px);
+  background: var(--color-success-light, #d1fae5);
+  border: 1px solid var(--color-success, #10b981);
+  border-radius: var(--radius-md, 8px);
+  color: var(--color-success-dark, #065f46);
+}
+
+.pendingAnswers {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md, 16px);
+  padding: var(--spacing-md, 16px);
+  background: var(--color-warning-light, #fef3cd);
+  border: 1px solid var(--color-warning, #f59e0b);
+  border-radius: var(--radius-md, 8px);
+  color: var(--color-warning-dark, #92400e);
+}
+
+.completionIcon {
+  font-size: var(--font-size-lg, 1.125rem);
+  flex-shrink: 0;
+}
+
+.completionText {
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: 500;
+}
+
+/* Empty State */
+.emptyState {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: var(--spacing-2xl, 48px) var(--spacing-lg, 24px);
+  text-align: center;
+  background: var(--color-background, #ffffff);
+  border: 2px dashed var(--color-border-light, #e2e8f0);
+  border-radius: var(--radius-lg, 12px);
+}
+
+.emptyIcon {
+  font-size: 3rem;
+  margin-bottom: var(--spacing-md, 16px);
+  opacity: 0.5;
+}
+
+.emptyText {
+  font-size: var(--font-size-lg, 1.125rem);
+  color: var(--color-text-muted, #64748b);
+  font-weight: 500;
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+  .progressHeader {
+    padding: var(--spacing-md, 16px);
+  }
+  
+  .questions {
+    padding: var(--spacing-md, 16px);
+  }
+  
+  .completionStatus {
+    padding: var(--spacing-md, 16px);
+  }
+  
+  .progressIndicator {
+    flex-direction: column;
+    align-items: stretch;
+    gap: var(--spacing-sm, 8px);
+  }
+  
+  .progressText {
+    text-align: center;
+  }
+  
+  .questionsTitle {
+    font-size: var(--font-size-lg, 1.125rem);
+  }
+  
+  .allAnswered, .pendingAnswers {
+    flex-direction: column;
+    text-align: center;
+    gap: var(--spacing-sm, 8px);
+  }
+}
+
+/* Focus and Accessibility */
+.progressBar:focus-within {
+  outline: 2px solid var(--color-primary, #7c3aed);
+  outline-offset: 2px;
+}
+
+/* Reduced Motion */
+@media (prefers-reduced-motion: reduce) {
+  .progressFill {
+    transition: none;
+  }
+  
+  .progressFill::after {
+    animation: none;
+  }
+}
+
+/* Print Styles */
+@media print {
+  .progressHeader {
+    background: white;
+    border: 1px solid #ccc;
+  }
+  
+  .allAnswered, .pendingAnswers {
+    background: white;
+    border: 1px solid #ccc;
+  }
+}
