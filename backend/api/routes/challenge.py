@@ -9,7 +9,10 @@ from api.integrations.types import AgentContext, PersonaType, SubjectType, Diffi
 from api.repositories.challenges import load_challenge, decrement_attempts, set_status, create_challenge
 from api.repositories.sessions import create_session
 from api.repositories.commands import enqueue_grant_session
+from api.repositories.analytics import AnalyticsRepository
 from api.schemas.challenge import ChallengeAnswerIn, ChallengeApprovedOut, ChallengePendingOut, ChallengeGenerateIn, ChallengeGenerateOut
+from utils.logger import agent_logger
+import time
 
 router = APIRouter()
 
@@ -84,6 +87,8 @@ async def test_validation(
 @router.post("/challenge/generate", response_model=ChallengeGenerateOut)
 async def generate_challenge(body: ChallengeGenerateIn, db: Session = Depends(get_db)):
     """Generate a new challenge using the agent router."""
+    start_time = time.time()
+    
     try:
         # Build context
         context = AgentContext(
@@ -110,6 +115,21 @@ async def generate_challenge(body: ChallengeGenerateIn, db: Session = Depends(ge
             payload=challenge_payload
         )
         
+        # Track agent performance
+        response_time = time.time() - start_time
+        analytics_repo = AnalyticsRepository(db)
+        analytics_repo.update_agent_performance(
+            agent_type=challenge_payload["metadata"]["agent_type"],
+            persona=challenge_payload["metadata"]["persona"],
+            model=challenge_payload["metadata"].get("model", "unknown"),
+            performance_data={
+                "successful": True,
+                "response_time": response_time,
+                "subject": challenge_payload["metadata"]["subject"],
+                "difficulty": challenge_payload["metadata"]["difficulty"]
+            }
+        )
+        
         return ChallengeGenerateOut(
             challenge_id=challenge.id,
             questions=challenge_payload["questions"],
@@ -117,10 +137,29 @@ async def generate_challenge(body: ChallengeGenerateIn, db: Session = Depends(ge
         )
         
     except Exception as e:
+        # Track failed agent performance
+        response_time = time.time() - start_time
+        try:
+            analytics_repo = AnalyticsRepository(db)
+            analytics_repo.update_agent_performance(
+                agent_type="unknown",
+                persona=body.persona or AGENT_DEFAULT_PERSONA,
+                model="unknown",
+                performance_data={
+                    "successful": False,
+                    "response_time": response_time,
+                    "error": str(e)
+                }
+            )
+        except:
+            pass  # Don't let analytics errors break the main flow
+        
         raise HTTPException(status_code=500, detail=f"Failed to generate challenge: {str(e)}")
 
 @router.post("/challenge/answer", response_model=ChallengeApprovedOut | ChallengePendingOut)
 async def challenge_answer(body: ChallengeAnswerIn, db: Session = Depends(get_db)):
+    start_time = time.time()
+    
     ch = load_challenge(db, body.challenge_id)
     if not ch:
         raise HTTPException(status_code=404, detail="challenge_not_found")
@@ -141,6 +180,57 @@ async def challenge_answer(body: ChallengeAnswerIn, db: Session = Depends(get_db
     # Select appropriate agent using router
     agent = agent_router.select_agent(context)
     validation_result = await agent.validate_answers(ch.payload, [a.dict() for a in body.answers])
+    
+    # Calculate timing
+    response_time = time.time() - start_time
+    
+    # Prepare analytics data
+    challenge_data = {
+        "persona": ch.payload["metadata"]["persona"],
+        "subject": ch.payload["metadata"]["subject"],
+        "difficulty": ch.payload["metadata"]["difficulty"],
+        "agent_type": ch.payload["metadata"]["agent_type"],
+        "total_questions": len(ch.payload["questions"]),
+        "correct_answers": sum(1 for answer in body.answers if validation_result["correct"]),
+        "score": validation_result["score"],
+        "passed": validation_result["correct"],
+        "time_to_complete": int(response_time * 1000),  # Convert to milliseconds
+        "time_per_question": response_time / len(ch.payload["questions"]) if ch.payload["questions"] else 0,
+        "feedback": validation_result.get("feedback"),
+        "attempts_made": 3 - ch.attempts_left + 1  # Calculate attempts made
+    }
+    
+    # Create analytics entry
+    analytics_repo = AnalyticsRepository(db)
+    analytics_repo.create_challenge_analytics(
+        challenge_id=ch.id,
+        mac=ch.mac,
+        router_id=ch.router_id,
+        challenge_data=challenge_data
+    )
+    
+    # Update student performance
+    analytics_repo.update_student_performance(
+        mac=ch.mac,
+        router_id=ch.router_id,
+        challenge_result={
+            "passed": validation_result["correct"],
+            "score": validation_result["score"],
+            "subject": ch.payload["metadata"]["subject"],
+            "difficulty": ch.payload["metadata"]["difficulty"]
+        }
+    )
+    
+    # Update learning path
+    analytics_repo.update_learning_path(
+        mac=ch.mac,
+        router_id=ch.router_id,
+        performance_data={
+            "subject": ch.payload["metadata"]["subject"],
+            "score": validation_result["score"],
+            "difficulty": ch.payload["metadata"]["difficulty"]
+        }
+    )
 
     if validation_result["correct"]:
         set_status(db, ch, "passed")

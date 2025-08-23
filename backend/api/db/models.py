@@ -2,7 +2,7 @@
 import uuid
 from datetime import datetime, timedelta
 from sqlalchemy import Column, String, Integer, DateTime, Text, JSON, Index, func
-from sqlalchemy.orm import validates
+from sqlalchemy.orm import validates, relationship
 from api.core.db import Base
 
 def _uuid() -> str:
@@ -60,6 +60,10 @@ class Challenge(Base):
     attempts_left = Column(Integer, nullable=False, default=2)
     status = Column(String(16), nullable=False, default="open")  # open|passed|failed|expired
     created_at = Column(DateTime(timezone=True), server_default=func.now(), nullable=False)
+    
+    # Analytics relationship
+    analytics = relationship("ChallengeAnalytics", back_populates="challenge", uselist=False)
+    
     @validates("mac","router_id")
     def _v(self, _, v): return _normalize_mac(v)
 
