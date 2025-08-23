@@ -133,6 +133,22 @@
   font-weight: 600;
 }
 
+/* Warning styles for last chance */
+.lastChance {
+  border-left: 3px solid #f59e0b;
+  background: #fef3c7;
+  padding: var(--spacing-sm, 8px);
+  border-radius: var(--radius-sm, 4px);
+  flex: 1;
+}
+
+.warningText {
+  font-size: var(--font-size-sm, 0.875rem);
+  color: #92400e;
+  font-weight: 500;
+  text-align: center;
+}
+
 /* Responsive Design */
 @media (max-width: 640px) {
   .progressContainer {

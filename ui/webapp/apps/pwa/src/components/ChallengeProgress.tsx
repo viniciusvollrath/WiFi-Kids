@@ -1,5 +1,6 @@
 import React from 'react'
 import { Challenge, ChallengeProgress as ChallengeProgressType } from '../types'
+import { t } from '../i18n'
 import styles from './ChallengeProgress.module.css'
 
 export interface ChallengeProgressProps {
@@ -20,6 +21,7 @@ export const ChallengeProgress: React.FC<ChallengeProgressProps> = ({
   const progressPercentage = Math.round((progress.completedQuestions / progress.totalQuestions) * 100)
   const timeSpentMinutes = Math.floor(progress.timeSpent / (1000 * 60))
   const timeSpentSeconds = Math.floor((progress.timeSpent % (1000 * 60)) / 1000)
+  const translations = t(locale)
 
   const getStatusText = () => {
     switch (challenge.status) {
@@ -84,7 +86,7 @@ export const ChallengeProgress: React.FC<ChallengeProgressProps> = ({
       <div className={styles.progressSection}>
         <div className={styles.progressInfo}>
           <span className={styles.progressText}>
-            {locale === 'pt' ? 'Progresso' : 'Progress'}: {progress.completedQuestions}/{progress.totalQuestions}
+            {translations.progress_questions(progress.completedQuestions, progress.totalQuestions)}
           </span>
           <span className={styles.progressPercentage}>
             {progressPercentage}%
@@ -107,20 +109,24 @@ export const ChallengeProgress: React.FC<ChallengeProgressProps> = ({
       <div className={styles.stats}>
         <div className={styles.stat}>
           <span className={styles.statLabel}>
-            {locale === 'pt' ? 'Tempo' : 'Time'}:
+            {translations.progress_time_spent(timeSpentMinutes)}
           </span>
           <span className={styles.statValue}>
-            {timeSpentMinutes}:{timeSpentSeconds.toString().padStart(2, '0')}
+            :{timeSpentSeconds.toString().padStart(2, '0')}
           </span>
         </div>
         <div className={styles.stat}>
           <span className={styles.statLabel}>
-            {locale === 'pt' ? 'Tentativa' : 'Attempt'}:
-          </span>
-          <span className={styles.statValue}>
-            {challenge.currentAttempt}/{challenge.maxAttempts}
+            {translations.attempts_remaining(challenge.maxAttempts - challenge.currentAttempt + 1)}
           </span>
         </div>
+        {challenge.currentAttempt === challenge.maxAttempts && (
+          <div className={`${styles.stat} ${styles.lastChance}`}>
+            <span className={styles.warningText}>
+              {translations.attempts_last_chance}
+            </span>
+          </div>
+        )}
         {progress.score !== undefined && (
           <div className={styles.stat}>
             <span className={styles.statLabel}>

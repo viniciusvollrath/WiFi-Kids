@@ -63,8 +63,8 @@ export default function App() {
   // Add initial greeting message when chat panel first opens
   const addGreetingMessage = useCallback(() => {
     const greetingContent: BilingualContent = {
-      pt: i.greeting,
-      en: t('en').greeting
+      pt: i.greeting_general, // Use general greeting as default
+      en: t('en').greeting_general
     }
     
     messageStore.add('agent', greetingContent, {
@@ -72,7 +72,7 @@ export default function App() {
       reason: 'greeting'
     })
     setMessages([...messageStore.messages])
-  }, [i.greeting])
+  }, [i.greeting_general])
 
   // Handle access request (CTA click)
   const handleAccessRequest = useCallback(async () => {
