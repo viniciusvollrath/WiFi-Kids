@@ -16,6 +16,12 @@ def _parse_int(v: str, default: int) -> int:
     except Exception:
         return default
 
+def _parse_float(v: str, default: float) -> float:
+    try:
+        return float(v)
+    except Exception:
+        return default
+
 def _parse_cors(origins: str) -> List[str]:
     # "https://app.wifikids.com,http://localhost:5173"
     return [o.strip() for o in origins.split(",") if o.strip()]
@@ -34,7 +40,7 @@ DATABASE_URL = _getenv("DATABASE_URL", "sqlite:///./dev.db")
 # === OpenAI Configuration ===
 OPENAI_API_KEY = _getenv("OPENAI_API_KEY", "")
 OPENAI_MODEL = _getenv("OPENAI_MODEL", "gpt-4o-mini")
-OPENAI_TEMPERATURE = float(_getenv("OPENAI_TEMPERATURE", "0.3"))
+OPENAI_TEMPERATURE = _parse_float(_getenv("OPENAI_TEMPERATURE", "0.3"), 0.3)
 OPENAI_MAX_TOKENS = _parse_int(_getenv("OPENAI_MAX_TOKENS", "1000"), 1000)
 
 # === Agent Configuration ===
@@ -47,6 +53,12 @@ AGENT_FALLBACK_ENABLED = _parse_bool(_getenv("AGENT_FALLBACK_ENABLED", "true"))
 ROUTER_ENABLED = _parse_bool(_getenv("ROUTER_ENABLED", "true"))
 ROUTER_PREFER_LLM = _getenv("ROUTER_PREFER_LLM", "openai")  # "openai", "anthropic", "google"
 ROUTER_FALLBACK_TO_MOCK = _parse_bool(_getenv("ROUTER_FALLBACK_TO_MOCK", "true"))
+
+# === Validation Configuration ===
+VALIDATION_ENABLE_PARTIAL_CREDIT = _parse_bool(_getenv("VALIDATION_ENABLE_PARTIAL_CREDIT", "true"))
+VALIDATION_CASE_SENSITIVE = _parse_bool(_getenv("VALIDATION_CASE_SENSITIVE", "false"))
+VALIDATION_IGNORE_WHITESPACE = _parse_bool(_getenv("VALIDATION_IGNORE_WHITESPACE", "true"))
+VALIDATION_DEFAULT_THRESHOLD = _parse_float(_getenv("VALIDATION_DEFAULT_THRESHOLD", "0.75"), 0.75)
 
 # Objetos utilitários já resolvidos
 TZ = ZoneInfo(DEFAULT_TIMEZONE)
