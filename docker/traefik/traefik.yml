@@ -16,7 +16,7 @@ providers:
 certificatesResolvers:
   letsencrypt:
     acme:
-      email: ${TRAEFIK_ACME_EMAIL}
+      email: cert@wifikids.fun          # <-- e-mail fixo e válido
       storage: /acme/acme.json
       httpChallenge:
         entryPoint: web
