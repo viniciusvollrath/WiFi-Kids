@@ -75,18 +75,17 @@ export class AgentService {
     try {
       console.log('[AgentService] Attempting real backend connection...')
       
-      const result = await withErrorHandling(async () => {
-        if (!answer) {
-          // Step 1: First request - generate challenge (kid clicked "Access Internet")
-          return await this.generateChallenge(timeout)
-        } else {
-          // Step 2: Answer submission - validate answers and get access decision
-          return await this.submitAnswer(answer, timeout)
-        }
-      }, 'network')()
-      
-      console.log('[AgentService] Real backend success!')
-      return result
+      if (!answer) {
+        // Step 1: First request - generate challenge (kid clicked "Access Internet")
+        const result = await this.generateChallenge(timeout)
+        console.log('[AgentService] Real backend challenge generation success!')
+        return result
+      } else {
+        // Step 2: Answer submission - validate answers and get access decision
+        const result = await this.submitAnswer(answer, timeout)
+        console.log('[AgentService] Real backend answer validation success!')
+        return result
+      }
       
     } catch (error) {
       console.warn('[AgentService] Real backend failed, falling back to enhanced mock mode:', error)
