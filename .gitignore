@@ -38,6 +38,7 @@ pnpm-debug.log*
 .env
 .env.local
 .env.*.local
+docker/traefik/acme.json
 
 # IDE and OS files
 .DS_Store
