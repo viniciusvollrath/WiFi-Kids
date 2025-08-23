@@ -136,19 +136,44 @@ export function createAskMoreResponse(
   questionType: string,
   persona: 'tutor' | 'maternal' | 'general' = 'tutor'
 ): DecisionResponse {
-  const questions = {
-    study_completion: {
-      message_pt: 'Primeiro, me conta: você já terminou suas tarefas de casa?',
-      message_en: 'First, tell me: have you finished your homework?',
-      question_pt: 'Você terminou a lição de casa?',
-      question_en: 'Did you finish your homework?'
+  // For MVP demo, let's create more engaging educational questions
+  const educationalQuestions = [
+    {
+      message_pt: 'Olá! Antes de acessar a internet, vamos testar seus conhecimentos! 📚',
+      message_en: 'Hello! Before accessing the internet, let\'s test your knowledge! 📚',
+      question_pt: 'Qual é a capital do Brasil?',
+      question_en: 'What is the capital of Brazil?',
+      subject: 'geography'
     },
-    generic: {
-      message_pt: 'Preciso saber mais algumas coisas antes de liberar o acesso.',
-      message_en: 'I need to know a few more things before granting access.',
-      question_pt: 'Você pode me contar mais?',
-      question_en: 'Can you tell me more?'
+    {
+      message_pt: 'Hora de um desafio de matemática! 🧮',
+      message_en: 'Time for a math challenge! 🧮',
+      question_pt: 'Quanto é 15 + 27?',
+      question_en: 'What is 15 + 27?',
+      subject: 'math'
+    },
+    {
+      message_pt: 'Vamos testar sua história! 🏛️',
+      message_en: 'Let\'s test your history! 🏛️',
+      question_pt: 'Em que ano o Brasil foi descoberto?',
+      question_en: 'In what year was Brazil discovered?',
+      subject: 'history'
+    },
+    {
+      message_pt: 'Pergunta de ciências! 🔬',
+      message_en: 'Science question! 🔬',
+      question_pt: 'Quantos planetas existem em nosso sistema solar?',
+      question_en: 'How many planets are in our solar system?',
+      subject: 'science'
     }
+  ]
+  
+  // Pick a random question for demo variety
+  const randomQuestion = educationalQuestions[Math.floor(Math.random() * educationalQuestions.length)]
+  
+  const questions = {
+    study_completion: randomQuestion,
+    generic: randomQuestion
   }
   
   const question = questions[questionType as keyof typeof questions] || questions.generic
@@ -160,6 +185,15 @@ export function createAskMoreResponse(
     allowed_minutes: 0,
     question_pt: question.question_pt,
     question_en: question.question_en,
+    questions: [
+      {
+        id: 'q1',
+        prompt: question.question_pt,
+        type: 'short',
+        difficulty: 'easy',
+        subject: question.subject || 'general'
+      }
+    ],
     metadata: {
       reason: questionType,
       persona
@@ -178,10 +212,10 @@ export function getCurrentMockContext(now: Date = new Date()): MockContext {
     now,
     tz: Intl.DateTimeFormat().resolvedOptions().timeZone,
     block_windows: [
-      { start: '21:00', end: '07:00' } // Bedtime: 9 PM to 7 AM
+      // { start: '21:00', end: '07:00' } // Bedtime: 9 PM to 7 AM - DISABLED FOR MVP
     ],
     study_windows: [
-      { start: '14:00', end: '16:00' } // Study time: 2 PM to 4 PM
+      { start: '00:00', end: '23:59' } // Always study time for MVP demo
     ]
   }
 }
@@ -208,39 +242,119 @@ export function decideMock(context: MockContext, answer?: string): DecisionRespo
     if (answer !== undefined) {
       const normalizedAnswer = answer.toLowerCase().trim()
       
-      // Define answer patterns with priority (longer/more specific first)
-      const negativePatterns = [
-        'ainda não', 'ainda nao', 'not yet', 'não', 'nao', 'no', 'nope'
-      ]
-      const positivePatterns = [
-        'já terminei', 'ja terminei', 'finished', 'done', 'terminei', 'já', 'ja', 'sim', 'yes'
+      // Check for correct answers to educational questions
+      const correctAnswers = [
+        // Geography - Capital of Brazil
+        'brasília', 'brasilia', 'brasília, df', 'brasilia, df',
+        
+        // Math - 15 + 27 = 42, 5 + 5 = 10, 2 + 3 = 5
+        '42', 'quarenta e dois',
+        '10', 'dez',
+        '5', 'cinco',
+        
+        // History - Brazil discovered in 1500
+        '1500', 'mil e quinhentos',
+        
+        // Science - 8 planets in solar system  
+        '8', 'oito', 'oito planetas', '8 planetas',
+        
+        // Generic positive responses
+        'sim', 'yes', 'já', 'ja', 'terminei', 'finished', 'done'
       ]
       
-      // Single character answers (handle separately to avoid conflicts)
-      if (normalizedAnswer === 'n') {
-        return createDenyResponse('study_time', 'tutor')
-      } else if (normalizedAnswer === 'y' || normalizedAnswer === 's') {
-        return createAllowResponse(15, 'tutor')
-      }
+      const incorrectButTrying = [
+        // Common wrong answers that show they're trying
+        'são paulo', 'rio de janeiro', 'salvador', // wrong capitals
+        '40', '41', '43', '44', // close math answers for 15+27
+        '8', '9', '11', '12', // close math answers for 5+5
+        '1498', '1499', '1501', '1502', // close history dates
+        '9', '7', 'nove', 'sete', 'nove planetas', // close science
+      ]
       
-      // Check negative patterns first (more specific)
-      if (negativePatterns.some(pattern => normalizedAnswer.includes(pattern))) {
-        return createDenyResponse('study_time', 'tutor')
-      } else if (positivePatterns.some(pattern => normalizedAnswer.includes(pattern))) {
-        return createAllowResponse(15, 'tutor')
-      } else {
-        // Unclear answer, ask again with more specific question
+      // Check if answer is correct
+      if (correctAnswers.some(correct => normalizedAnswer.includes(correct))) {
+        // Give educational praise based on the correct answer
+        let praiseMessage = ''
+        if (normalizedAnswer.includes('brasilia')) {
+          praiseMessage = '🎉 Perfeito! Brasília é mesmo a capital do Brasil desde 1960! Você conhece bem geografia! Aqui está seu acesso à internet por 30 minutos. Use com sabedoria! 🌐'
+        } else if (normalizedAnswer.includes('42')) {
+          praiseMessage = '🎉 Exato! 15 + 27 = 42! Você é muito bom em matemática! Aqui está seu acesso à internet por 30 minutos. Aproveite! 🧮'
+        } else if (normalizedAnswer.includes('10')) {
+          praiseMessage = '🎉 Correto! 5 + 5 = 10! Matemática básica dominada! Aqui está seu acesso à internet por 30 minutos. Divirta-se! ✨'
+        } else if (normalizedAnswer.includes('5')) {
+          praiseMessage = '🎉 Isso mesmo! 2 + 3 = 5! Você conseguiu! Aqui está seu acesso à internet por 30 minutos. Parabéns! 🎊'
+        } else if (normalizedAnswer.includes('1500')) {
+          praiseMessage = '🎉 Correto! O Brasil foi descoberto em 1500! Você sabe história! Aqui está seu acesso à internet por 30 minutos. Use para aprender mais! 📚'
+        } else if (normalizedAnswer.includes('8')) {
+          praiseMessage = '🎉 Perfeito! Existem 8 planetas no nosso sistema solar! Você conhece bem ciências! Aqui está seu acesso à internet por 30 minutos. Explore o universo! 🚀'
+        } else {
+          praiseMessage = '🎉 Muito bem! Você demonstrou conhecimento! Aqui está seu acesso à internet por 30 minutos. Continue aprendendo! 💪'
+        }
+        
         return {
-          decision: 'ASK_MORE',
-          message_pt: 'Não entendi bem. Você pode responder com "sim" ou "não"?',
-          message_en: 'I didn\'t understand. Can you answer with "yes" or "no"?',
-          allowed_minutes: 0,
-          question_pt: 'Você terminou toda a lição de casa? (sim/não)',
-          question_en: 'Did you finish all your homework? (yes/no)',
+          decision: 'ALLOW',
+          message_pt: praiseMessage,
+          message_en: '🎉 Excellent! You got it right! Here\'s your internet access for 30 minutes!',
+          allowed_minutes: 30,
+          question_pt: null,
+          question_en: null,
           metadata: {
-            reason: 'clarification_needed',
+            reason: 'correct_answer',
             persona: 'tutor'
           }
+        }
+      }
+      
+      // Check if answer shows they're trying but got it wrong
+      if (incorrectButTrying.some(attempt => normalizedAnswer.includes(attempt))) {
+        // Give educational feedback based on the wrong answer
+        let feedbackMessage = ''
+        if (normalizedAnswer.includes('1498') || normalizedAnswer.includes('1499') || normalizedAnswer.includes('1501') || normalizedAnswer.includes('1502')) {
+          feedbackMessage = '🤔 Muito perto! Você conhece história! Foi em 1500 que Pedro Álvares Cabral chegou ao Brasil. Vou dar uma pergunta mais fácil!'
+        } else if (normalizedAnswer.includes('são paulo') || normalizedAnswer.includes('rio')) {
+          feedbackMessage = '🤔 Essa é uma cidade importante, mas a capital é Brasília! Vou dar uma pergunta mais fácil.'
+        } else if (normalizedAnswer.includes('40') || normalizedAnswer.includes('41') || normalizedAnswer.includes('43')) {
+          feedbackMessage = '🤔 Quase! Para 15 + 27, tente contar: 15 + 20 = 35, depois 35 + 7 = 42. Vou dar outra chance!'
+        } else if (normalizedAnswer.includes('8') || normalizedAnswer.includes('9') || normalizedAnswer.includes('11') || normalizedAnswer.includes('12')) {
+          feedbackMessage = '🤔 Quase! Para 5 + 5, conte nos dedos: 5 + 1 + 1 + 1 + 1 + 1 = 10. Vou dar outra chance!'
+        } else {
+          feedbackMessage = '🤔 Quase lá! Você está no caminho certo. Vou dar uma pergunta mais fácil.'
+        }
+        
+        return {
+          decision: 'ASK_MORE',
+          message_pt: feedbackMessage,
+          message_en: '🤔 Close! Let me give you an easier question.',
+          allowed_minutes: 0,
+          question_pt: 'Quanto é 2 + 3?',
+          question_en: 'What is 2 + 3?',
+          questions: [
+            {
+              id: 'q2',
+              prompt: 'Quanto é 2 + 3?',
+              type: 'short',
+              difficulty: 'easy',
+              subject: 'math'
+            }
+          ],
+          metadata: {
+            reason: 'partial_credit',
+            persona: 'tutor'
+          }
+        }
+      }
+      
+      // For clearly wrong or unclear answers - be more encouraging
+      return {
+        decision: 'DENY', 
+        message_pt: '❌ Ops! Essa não era a resposta que eu esperava. Não se preocupe, aprender é um processo! 📚 Que tal estudar um pouco mais e voltar para tentar? Eu acredito em você! 💪',
+        message_en: '❌ Oops! That wasn\'t the answer I expected. Don\'t worry, learning is a process! 📚 How about studying a bit more and coming back to try? I believe in you! 💪',
+        allowed_minutes: 0,
+        question_pt: null,
+        question_en: null,
+        metadata: {
+          reason: 'incorrect_answer',
+          persona: 'tutor'
         }
       }
     } else {

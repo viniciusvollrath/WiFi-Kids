@@ -53,6 +53,83 @@
   font-style: italic;
 }
 
+/* Persona-specific styling */
+.personaTutor .avatar {
+  background-color: #e3f2fd;
+  color: #1565c0;
+}
+
+.personaTutor .messageText {
+  background-color: #f3f9ff;
+  border-left: 3px solid #2196f3;
+  color: #1565c0;
+}
+
+.personaMaternal .avatar {
+  background-color: #fce4ec;
+  color: #c2185b;
+}
+
+.personaMaternal .messageText {
+  background-color: #fff5f8;
+  border-left: 3px solid #e91e63;
+  color: #c2185b;
+}
+
+.personaGeneral .avatar {
+  background-color: var(--color-background-muted);
+  color: var(--color-text-muted);
+}
+
+.personaGeneral .messageText {
+  background-color: var(--color-background-muted);
+  border-left: 3px solid var(--color-border);
+  color: var(--color-text);
+}
+
+/* Success/failure message styling */
+.success {
+  border-left: 3px solid #4caf50;
+}
+
+.success .avatar {
+  background-color: #e8f5e8;
+  color: #2e7d32;
+}
+
+.success .messageText {
+  background-color: #f1f8e9;
+  color: #2e7d32;
+}
+
+.failure {
+  border-left: 3px solid #f44336;
+}
+
+.failure .avatar {
+  background-color: #ffebee;
+  color: #d32f2f;
+}
+
+.failure .messageText {
+  background-color: #fef7f7;
+  color: #d32f2f;
+}
+
+.partial {
+  border-left: 3px solid #ff9800;
+}
+
+.partial .avatar {
+  background-color: #fff3e0;
+  color: #ef6c00;
+}
+
+.partial .messageText {
+  background-color: #fff8f0;
+  color: #ef6c00;
+}
+
 /* Responsive design - mobile first approach */
 @media (max-width: 480px) {
   .agentMessage {

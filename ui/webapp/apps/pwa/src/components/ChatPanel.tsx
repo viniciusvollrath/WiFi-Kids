@@ -1,7 +1,7 @@
 import React from 'react'
-import { ChatPanelProps } from '../types'
+import { ChatPanelProps, Question } from '../types'
 import { MessageList } from './MessageList'
-import { ChatInput } from './ChatInput'
+import { AnswerInput } from './AnswerInput'
 import { TryAgainButton } from './TryAgainButton'
 import styles from './ChatPanel.module.css'
 
@@ -11,11 +11,17 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
   loading,
   onSend,
   onRetry,
-  locale
+  locale,
+  questions,
+  onAnswersSubmit
 }) => {
   const isInputDisabled = loading || state === 'REQUESTING'
   const showTryAgain = state === 'DENY'
   const showInput = state !== 'DENY'
+  
+  // Determine if we should show questions vs regular chat
+  const hasQuestions = questions && questions.length > 0 && state === 'ASK_MORE'
+  const inputMode = hasQuestions ? 'questions' : 'chat'
 
   return (
     <div className={styles.chatPanel}>
@@ -32,10 +38,14 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
       />
       
       {showInput && (
-        <ChatInput
+        <AnswerInput
+          mode={inputMode}
+          questions={hasQuestions ? questions : undefined}
           onSend={onSend}
+          onAnswersSubmit={onAnswersSubmit || (() => {})}
           disabled={isInputDisabled}
           locale={locale}
+          loading={loading}
         />
       )}
       

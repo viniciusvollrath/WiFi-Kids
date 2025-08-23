@@ -76,9 +76,13 @@
 .questionPrompt {
   font-size: var(--font-size-lg, 1.125rem);
   line-height: 1.6;
-  color: var(--color-text, #1f2937);
+  color: #1f2937 !important;  /* Force dark text */
+  background-color: white;    /* Ensure light background */
+  padding: var(--spacing-md, 12px);
+  border-radius: var(--radius-md, 8px);
   margin-bottom: var(--spacing-lg, 24px);
   font-weight: 500;
+  border: 1px solid #e5e7eb;
 }
 
 /* Answer Area */
