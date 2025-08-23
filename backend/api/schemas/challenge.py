@@ -1,6 +1,6 @@
 # api/schemas/challenge.py
 from pydantic import BaseModel
-from typing import List
+from typing import List, Optional
 
 class Answer(BaseModel):
     id: str
@@ -11,11 +11,13 @@ class ChallengeAnswerIn(BaseModel):
     answers: List[Answer]
 
 class ChallengeApprovedOut(BaseModel):
-    allowed: bool = True
-    ttl_sec: int
+    decision: str = "ALLOW"
+    allowed_minutes: int
     session_id: str
+    feedback: Optional[str] = None
 
 class ChallengePendingOut(BaseModel):
-    allowed: bool = False
+    decision: str = "DENY"
     attempts_left: int
     reason: str  # "wrong_answer"
+    feedback: Optional[str] = None

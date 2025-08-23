@@ -1,8 +1,8 @@
 from pydantic import BaseModel
 
 class Decision(BaseModel):
-    allow: bool
-    duration_s: int
+    decision: str
+    allowed_minutes: int
     reason: str
 
 async def evaluate_access(ctx: dict) -> Decision:
@@ -11,7 +11,7 @@ async def evaluate_access(ctx: dict) -> Decision:
     # MVP: libera 15 min se "tarefas_feitas" estiver true; senão 5 min
     tarefas = ctx.get("tarefas_feitas", False)
     return Decision(
-        allow=True,
-        duration_s=900 if tarefas else 300,
+        decision="ALLOW",
+        allowed_minutes=15 if tarefas else 5,
         reason="tarefas ok" if tarefas else "modo teste",
     )

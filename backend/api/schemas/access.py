@@ -22,10 +22,10 @@ class ChallengeOut(BaseModel):
     attempts_left: int
 
 class AccessApprovedOut(BaseModel):
-    allowed: bool = True
-    ttl_sec: int
+    decision: str = "ALLOW"
+    allowed_minutes: int
     session_id: str
 
 class AccessDeniedOut(BaseModel):
-    allowed: bool = False
+    decision: str = "DENY"
     reason: str  # "outside_schedule"

@@ -5,6 +5,15 @@
 # LangGraph
 .langgraph_api/
 
+# Python auto-generated files
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+*.pyw
+*.pyz
+*.pywz
+
 # Dependencies
 /node_modules
 
