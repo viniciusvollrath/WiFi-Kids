@@ -21,7 +21,7 @@ class AgentService(ABC):
     """
     
     @abstractmethod
-    def generate_challenge(self, context: AgentContext) -> ChallengePayload:
+    async def generate_challenge(self, context: AgentContext) -> ChallengePayload:
         """
         Generate a challenge based on the provided context.
         
@@ -34,7 +34,7 @@ class AgentService(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def validate_answers(self, payload: ChallengePayload, answers: List[Answer]) -> ValidationResult:
+    async def validate_answers(self, payload: ChallengePayload, answers: List[Answer]) -> ValidationResult:
         """
         Validate student answers and provide feedback.
         
@@ -62,7 +62,7 @@ class MockAgent(AgentService):
     Mock agent for testing - generates simple math questions.
     """
     
-    def generate_challenge(self, context: AgentContext) -> ChallengePayload:
+    async def generate_challenge(self, context: AgentContext) -> ChallengePayload:
         """Generate 1-3 simple math questions."""
         agent_logger.info(f"Generating mock challenge for {context['mac']} with persona {context['persona']}")
         
@@ -97,7 +97,7 @@ class MockAgent(AgentService):
             }
         }
 
-    def validate_answers(self, payload: ChallengePayload, answers: List[Answer]) -> ValidationResult:
+    async def validate_answers(self, payload: ChallengePayload, answers: List[Answer]) -> ValidationResult:
         """Validate answers against the answer key."""
         agent_logger.info(f"Validating {len(answers)} answers")
         
@@ -133,9 +133,15 @@ def create_agent(agent_type: str = "mock") -> AgentService:
     if agent_type == "mock":
         return MockAgent()
     elif agent_type == "langchain":
-        # Will be implemented in PR #2
-        agent_logger.warning("LangChain agent not yet implemented, falling back to mock")
-        return MockAgent()
+        try:
+            from api.integrations.langchain_agent import LangChainAgent
+            return LangChainAgent()
+        except ImportError as e:
+            agent_logger.error(f"Failed to import LangChain agent: {e}")
+            return MockAgent()
+        except ValueError as e:
+            agent_logger.error(f"LangChain agent configuration error: {e}")
+            return MockAgent()
     else:
         agent_logger.error(f"Unknown agent type: {agent_type}, using mock")
         return MockAgent()

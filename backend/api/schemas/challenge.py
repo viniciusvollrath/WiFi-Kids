@@ -1,6 +1,6 @@
 # api/schemas/challenge.py
 from pydantic import BaseModel
-from typing import List, Optional
+from typing import List, Optional, Dict, Any
 
 class Answer(BaseModel):
     id: str
@@ -21,3 +21,17 @@ class ChallengePendingOut(BaseModel):
     attempts_left: int
     reason: str  # "wrong_answer"
     feedback: Optional[str] = None
+
+class ChallengeGenerateIn(BaseModel):
+    mac: str
+    router_id: str
+    locale: Optional[str] = "pt-BR"
+    persona: Optional[str] = "tutor"
+    subject: Optional[str] = None
+    difficulty: Optional[str] = None
+    previous_performance: Optional[Dict[str, float]] = None
+
+class ChallengeGenerateOut(BaseModel):
+    challenge_id: str
+    questions: List[Dict[str, Any]]
+    metadata: Dict[str, str]

@@ -38,6 +38,7 @@ OPENAI_TEMPERATURE = float(_getenv("OPENAI_TEMPERATURE", "0.3"))
 OPENAI_MAX_TOKENS = _parse_int(_getenv("OPENAI_MAX_TOKENS", "1000"), 1000)
 
 # === Agent Configuration ===
+AGENT_TYPE = _getenv("AGENT_TYPE", "langchain")  # "langchain" or "mock"
 AGENT_DEFAULT_PERSONA = _getenv("AGENT_DEFAULT_PERSONA", "tutor")
 AGENT_SUBJECTS = _getenv("AGENT_SUBJECTS", "math,history,geography,english,physics").split(",")
 AGENT_FALLBACK_ENABLED = _parse_bool(_getenv("AGENT_FALLBACK_ENABLED", "true"))
