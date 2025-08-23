@@ -10,10 +10,10 @@ http:
         stsIncludeSubdomains: true
         stsPreload: true
 
-  routers:
-    traefik-dashboard:
-      rule: Host(`traefik.${BASE_DOMAIN}`)
-      service: api@internal
-      entryPoints: ["websecure"]
-      tls:
-        certResolver: letsencrypt
+#  routers:
+#    traefik-dashboard:
+#      rule: Host(`traefik.${BASE_DOMAIN}`)
+#      service: api@internal
+#      entryPoints: ["websecure"]
+#      tls:
+#        certResolver: letsencrypt
