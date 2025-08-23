@@ -11,11 +11,11 @@ class ChallengeAnswerIn(BaseModel):
     answers: List[Answer]
 
 class ChallengeApprovedOut(BaseModel):
-    allowed: bool = True
-    ttl_sec: int
+    decision: str = "ALLOW"
+    allowed_minutes: int
     session_id: str
 
 class ChallengePendingOut(BaseModel):
-    allowed: bool = False
+    decision: str = "DENY"
     attempts_left: int
     reason: str  # "wrong_answer"

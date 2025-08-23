@@ -26,11 +26,11 @@ def challenge_answer(body: ChallengeAnswerIn, db: Session = Depends(get_db)):
         set_status(db, ch, "passed")
         sess = create_session(db, ch.mac, ch.router_id, ttl_sec=SESSION_TTL_SEC)
         enqueue_grant_session(db, ch.router_id, ch.mac, SESSION_TTL_SEC)
-        return ChallengeApprovedOut(allowed=True, ttl_sec=SESSION_TTL_SEC, session_id=sess.id)
+        return ChallengeApprovedOut(decision="ALLOW", allowed_minutes=SESSION_TTL_SEC//60, session_id=sess.id)
 
     # errou -> decrementa
     decrement_attempts(db, ch)
     reason = "wrong_answer"
     if ch.attempts_left <= 0:
         set_status(db, ch, "failed")
-    return ChallengePendingOut(allowed=False, attempts_left=ch.attempts_left, reason=reason)
+    return ChallengePendingOut(decision="DENY", attempts_left=ch.attempts_left, reason=reason)

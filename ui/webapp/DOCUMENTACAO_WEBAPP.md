@@ -177,7 +177,7 @@ As políticas são configuradas via variáveis de ambiente no backend:
 
 ```env
 # Persona do agente (tutor, maternal, general)
-POLICY_PERSONA=tutor
+WFK_PERSONA=tutor
 
 # Máximo diário em minutos
 POLICY_DAILY_MAX=120

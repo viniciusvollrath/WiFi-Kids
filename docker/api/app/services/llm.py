@@ -1,8 +1,9 @@
 import os
 from langchain_openai import ChatOpenAI
+from backend.utils.constants import MODEL_NAME
 
 llm = ChatOpenAI(
-    model="gpt-5-reasoning",  # ajuste para o nome real no seu ambiente
+    model=MODEL_NAME,  
     temperature=0.2,
     api_key=os.getenv("OPENAI_API_KEY"),
 )
