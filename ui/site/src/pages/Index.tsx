@@ -441,7 +441,7 @@ const Index = () => {
                 asChild
                 className="text-lg px-8 py-4"
               >
-                <a href="mailto:contact@wifikids.fun">
+                <a href="mailto:vinicius@wifikids.fun">
                   <Mail className="w-5 h-5 mr-2" />
                   Get in Touch
                 </a>
@@ -466,7 +466,7 @@ const Index = () => {
       <footer className="py-8 bg-background border-t">
         <div className="container mx-auto px-4 text-center">
           <p className="text-muted-foreground">
-            © 2024 Wi-Fi Kids. Making the internet safer and smarter for children.
+            © 2025 Wi-Fi Kids. Making the internet safer and smarter for children.
           </p>
         </div>
       </footer>
