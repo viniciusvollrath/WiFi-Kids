@@ -15,8 +15,7 @@ services:
       - ./traefik/acme.json:/acme/acme.json
       - /var/run/docker.sock:/var/run/docker.sock:ro
     environment:
-      - CF_API_EMAIL=${CF_API_EMAIL}
-      - CF_API_TOKEN=${CF_API_TOKEN}
+      - CLOUDFLARE_DNS_API_TOKEN=${CLOUDFLARE_DNS_API_TOKEN}
     restart: unless-stopped
 
   redis:
@@ -81,6 +80,7 @@ services:
     depends_on:
       - traefik
     restart: unless-stopped
+
   landing:
     build:
       context: ../ui/site
@@ -100,23 +100,20 @@ services:
     restart: unless-stopped
 
   admin:
-    image: caddy:2-alpine
-    volumes:
-      - /home/deploy/WiFi-Kids/examples/admin.wifikids:/usr/share/caddy:ro
+    build:
+      context: ../examples/admin.wifikids
+      # se o admin precisar de variáveis VITE_*, acrescente aqui:
+      # args:
+      #   - VITE_API_URL=https://api.${BASE_DOMAIN}
     labels:
       - "traefik.enable=true"
-
-      # HTTP -> HTTPS
       - "traefik.http.routers.admin-http.rule=Host(`admin.${BASE_DOMAIN}`)"
       - "traefik.http.routers.admin-http.entrypoints=web"
       - "traefik.http.routers.admin-http.middlewares=redirect-to-https@file"
-
-      # HTTPS
       - "traefik.http.routers.admin-https.rule=Host(`admin.${BASE_DOMAIN}`)"
       - "traefik.http.routers.admin-https.entrypoints=websecure"
       - "traefik.http.routers.admin-https.tls.certresolver=letsencrypt"
       - "traefik.http.routers.admin-https.middlewares=security-headers@file"
-
       - "traefik.http.services.admin.loadbalancer.server.port=80"
     depends_on: [traefik]
     restart: unless-stopped

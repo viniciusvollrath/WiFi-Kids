@@ -9,11 +9,22 @@ http:
         stsSeconds: 31536000
         stsIncludeSubdomains: true
         stsPreload: true
+    redirect-www-to-apex:
+      redirectRegex:
+        regex: "^https?://www\\.wifikids\\.fun(.*)"
+        replacement: "https://wifikids.fun$1"
+        permanent: true
 
-#  routers:
-#    traefik-dashboard:
-#      rule: Host(`traefik.${BASE_DOMAIN}`)
-#      service: api@internal
-#      entryPoints: ["websecure"]
-#      tls:
-#        certResolver: letsencrypt
+  routers:
+    www-redirect:
+      rule: Host(`www.wifikids.fun`)
+      entryPoints: ["web","websecure"]
+      middlewares: ["redirect-www-to-apex"]
+      service: noop
+      tls: {}          # <-- ESSENCIAL para emitir cert de www
+
+  services:
+    noop:
+      loadBalancer:
+        servers:
+          - url: http://127.0.0.1
