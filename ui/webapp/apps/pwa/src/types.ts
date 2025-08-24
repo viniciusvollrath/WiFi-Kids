@@ -100,6 +100,7 @@ export interface ChatPanelProps {
 export interface LanguageToggleProps {
   locale: Locale
   onChange: (locale: Locale) => void
+  disabled?: boolean
 }
 
 // Agent message props interface

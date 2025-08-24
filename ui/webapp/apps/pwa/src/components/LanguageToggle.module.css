@@ -55,6 +55,22 @@
   color: white;
 }
 
+.optionDisabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
+.optionDisabled:hover {
+  background: transparent;
+  color: var(--color-text-muted);
+}
+
+.optionDisabled.optionActive:hover {
+  background: var(--color-primary);
+  color: white;
+}
+
 .flag {
   width: 16px;
   height: 12px;

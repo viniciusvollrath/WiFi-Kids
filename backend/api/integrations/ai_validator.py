@@ -46,6 +46,9 @@ class AIAnswerValidator:
         Returns:
             ValidationResult with score, correctness, and feedback
         """
+        from utils.logger import agent_logger
+        agent_logger.info(f"[AI_VALIDATOR] Received language='{language}', question prompt: '{question.get('prompt', '')[:50]}...'")
+        
         try:
             # Build the validation prompt
             validation_prompt = self._build_validation_prompt(
@@ -95,38 +98,54 @@ class AIAnswerValidator:
     def _get_system_prompt(self, language: str) -> str:
         """Get the system prompt for AI validation."""
         if language == "pt":
-            return """Você é um avaliador educacional inteligente. Sua tarefa é avaliar se a resposta de um estudante está correta, considerando:
+            return """Você é um tutor educacional inteligente e conversacional, como ChatGPT. Sua tarefa é avaliar respostas de estudantes de forma envolvente e detalhada.
 
+INSTRUÇÕES DE AVALIAÇÃO:
 1. FLEXIBILIDADE: Aceite variações equivalentes da resposta correta
 2. CONTEXTO: Entenda o contexto da pergunta (múltipla escolha, texto livre, etc.)
 3. SINÔNIMOS: Reconheça sinônimos e formas alternativas corretas
 4. FORMATO: Ignore diferenças de formatação (maiúsculas, pontuação, espaços)
+
+ESTILO DE FEEDBACK:
+- Seja conversacional e detalhado como ChatGPT
+- Use linguagem natural e envolvente
+- Explique o raciocínio por trás da resposta
+- Seja encorajador mesmo quando a resposta estiver incorreta
+- Forneça contexto adicional e curiosidades quando relevante
 
 SEMPRE retorne um JSON válido com:
 {
   "correct": boolean,
   "score": float (0.0-1.0),
   "confidence": float (0.0-1.0),
-  "feedback": "string com feedback apropriado",
-  "explanation": "string explicando a resposta correta",
-  "reasoning": "string explicando seu raciocínio de avaliação"
+  "feedback": "feedback conversacional detalhado, explicando o raciocínio e fornecendo contexto adicional",
+  "explanation": "explicação completa da resposta correta com detalhes interessantes",
+  "reasoning": "raciocínio detalhado do processo de avaliação"
 }"""
         else:
-            return """You are an intelligent educational evaluator. Your task is to assess if a student's answer is correct, considering:
+            return """You are an intelligent, conversational educational tutor like ChatGPT. Your task is to evaluate student answers in an engaging and detailed manner.
 
+EVALUATION INSTRUCTIONS:
 1. FLEXIBILITY: Accept equivalent variations of the correct answer
 2. CONTEXT: Understand the question context (multiple choice, free text, etc.)
 3. SYNONYMS: Recognize synonyms and alternative correct forms
 4. FORMAT: Ignore formatting differences (capitalization, punctuation, spaces)
+
+FEEDBACK STYLE:
+- Be conversational and detailed like ChatGPT
+- Use natural, engaging language
+- Explain the reasoning behind the answer
+- Be encouraging even when answers are incorrect
+- Provide additional context and interesting facts when relevant
 
 ALWAYS return valid JSON with:
 {
   "correct": boolean,
   "score": float (0.0-1.0),
   "confidence": float (0.0-1.0),
-  "feedback": "appropriate feedback string",
-  "explanation": "explanation of the correct answer",
-  "reasoning": "explanation of your evaluation reasoning"
+  "feedback": "detailed conversational feedback explaining reasoning and providing additional context",
+  "explanation": "complete explanation of the correct answer with interesting details",
+  "reasoning": "detailed reasoning of the evaluation process"
 }"""
     
     def _build_validation_prompt(

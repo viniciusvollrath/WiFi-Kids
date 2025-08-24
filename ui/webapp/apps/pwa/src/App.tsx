@@ -355,7 +355,11 @@ export default function App() {
             }}>
               {i.title}
             </h1>
-            <LanguageToggle locale={locale} onChange={handleLanguageChange} />
+            <LanguageToggle 
+              locale={locale} 
+              onChange={handleLanguageChange} 
+              disabled={appState !== 'IDLE'} 
+            />
           </div>
           
           <p style={{ 

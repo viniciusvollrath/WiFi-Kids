@@ -70,17 +70,24 @@ class LangChainAgent:
         self.question_prompt = ChatPromptTemplate.from_template("""
         {persona_prompt}
         
-        You are creating ONE SINGLE question for a conversational learning experience.
+        You are creating ONE SINGLE educational question for an interactive, conversational learning experience like ChatGPT.
         
         Topic: {subject}
         Difficulty: {difficulty}
         Language: {language}
         
-        IMPORTANT: Create the question and all options in {language} language only.
-        If language is "en-US" or "en", write everything in English.
-        If language is "pt-BR" or "pt", write everything in Portuguese.
+        CRITICAL LANGUAGE REQUIREMENT: Create the question and all options ENTIRELY in {language} language.
+        - If language is "en-US" or "en", write EVERYTHING in English only.
+        - If language is "pt-BR" or "pt", write EVERYTHING in Portuguese only.
+        - NO language mixing is allowed.
         
-        Create exactly 1 multiple-choice question with 4 options. Do not create multiple questions.
+        QUESTION STYLE REQUIREMENTS:
+        - Make it engaging and thought-provoking
+        - Use clear, conversational language
+        - Include interesting context when relevant
+        - Make sure it's educational and age-appropriate
+        
+        Create exactly 1 multiple-choice question with 4 realistic options where only one is clearly correct.
         
         Return ONLY this JSON format:
         {{
@@ -88,20 +95,20 @@ class LangChainAgent:
                 {{
                     "id": "q1",
                     "type": "mc", 
-                    "prompt": "Your single question here?",
-                    "options": ["A", "B", "C", "D"],
+                    "prompt": "Your engaging, conversational question here?",
+                    "options": ["Option A text", "Option B text", "Option C text", "Option D text"],
                     "answer_len": null,
                     "subject": "{subject}",
                     "difficulty": "{difficulty}",
-                    "explanation": "Why this answer is correct"
+                    "explanation": "Detailed explanation of why this answer is correct, with additional educational context"
                 }}
             ],
             "answer_key": {{
-                "q1": "correct_option_letter"
+                "q1": "A"
             }}
         }}
         
-        CRITICAL: The "questions" array must contain EXACTLY ONE question object. No more, no less.
+        CRITICAL: The "questions" array must contain EXACTLY ONE question object. Return valid JSON only.
         """)
         
         # Answer validation prompt template
@@ -251,7 +258,9 @@ class LangChainAgent:
             subject = SubjectType(payload.get("metadata", {}).get("subject", "math"))
             # Extract language from metadata, default to Portuguese for backward compatibility
             metadata = payload.get("metadata", {})
-            language = "en" if "en" in str(metadata.get("locale", "pt-BR")).lower() else "pt"
+            locale = metadata.get("locale", "pt-BR")
+            language = "en" if "en" in str(locale).lower() else "pt"
+            agent_logger.info(f"Language detection: locale='{locale}' -> language='{language}'")
             
             for answer in answers:
                 # Find the corresponding question
@@ -263,7 +272,7 @@ class LangChainAgent:
                 if ai_validator_available and ai_validator:
                     try:
                         # Try AI validation first
-                        agent_logger.info(f"Attempting AI validation for question {question.get('id')} with answer '{answer['value']}'")
+                        agent_logger.info(f"Attempting AI validation for question {question.get('id')} with answer '{answer['value']}', language='{language}', persona='{persona}'")
                         validation_result = ai_validator.validate_answer(
                             question=question,
                             student_answer=answer["value"],
