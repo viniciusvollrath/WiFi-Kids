@@ -140,12 +140,7 @@ const Index = () => {
                   <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
                     <div className="text-center space-y-4">
                       <Play className="w-16 h-16 text-primary mx-auto" />
-                      <p className="text-lg font-medium text-muted-foreground">
-                        Demo Video Coming Soon
-                      </p>
-                      <p className="text-sm text-muted-foreground">
-                        YouTube/Vimeo embed placeholder
-                      </p>
+                        <iframe width="560" height="315" src="https://www.youtube.com/embed/IxlBtQ2FvvU?si=SYKQSjS7dV0CSpje" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
                     </div>
                   </div>
                 </CardContent>
