@@ -63,7 +63,7 @@ class ConfigService {
       return value.split(',').map(item => item.trim()).filter(Boolean)
     }
 
-    const apiUrl = getEnvVar('VITE_API_URL', 'http://localhost:8000')
+    const apiUrl = getEnvVar('VITE_API_URL', 'http://72.60.69.196:8002')
     const defaultPersona = getEnvVar('VITE_DEFAULT_PERSONA', 'tutor') as 'tutor' | 'maternal' | 'general'
     const subjects = parseList(getEnvVar('VITE_SUBJECTS', 'math,history,geography,science,language,general'))
     const defaultLocale = getEnvVar('VITE_DEFAULT_LOCALE', 'pt') as 'pt' | 'en'
