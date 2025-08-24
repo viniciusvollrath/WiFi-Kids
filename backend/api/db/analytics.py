@@ -112,7 +112,7 @@ class AgentPerformance(Base):
     # Agent identification
     agent_type = Column(String(20), nullable=False, index=True)  # "langchain", "mock"
     persona = Column(String(20), nullable=False, index=True)
-    model_used = Column(String(50))  # "gpt-4o-mini", "mock"
+    model_used = Column(String(50))  # "gpt-5", "mock"
     
     # Performance metrics
     total_challenges_generated = Column(Integer, default=0)

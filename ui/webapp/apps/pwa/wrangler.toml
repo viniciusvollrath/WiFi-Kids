@@ -1,0 +1,24 @@
+# Cloudflare Pages configuration for WiFi-Kids PWA
+name = "wifikids-pwa"
+compatibility_date = "2024-08-24"
+
+[env.production]
+vars = {
+  VITE_API_URL = "https://api.wifikids.fun",
+  VITE_MOCK = "false",
+  VITE_DEBUG = "false"
+}
+
+[env.staging]
+vars = {
+  VITE_API_URL = "https://staging-api.wifikids.fun",
+  VITE_MOCK = "false", 
+  VITE_DEBUG = "true"
+}
+
+[env.development]
+vars = {
+  VITE_API_URL = "http://localhost:8002",
+  VITE_MOCK = "false",
+  VITE_DEBUG = "true"
+}

@@ -8,7 +8,7 @@ import requests
 import json
 import time
 
-API_BASE = "http://localhost:8000"
+API_BASE = "http://localhost:8002"
 
 def test_complete_flow():
     """Test the complete kid -> challenge -> answer -> access flow"""
