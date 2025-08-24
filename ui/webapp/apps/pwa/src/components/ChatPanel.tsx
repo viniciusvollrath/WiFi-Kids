@@ -3,6 +3,8 @@ import { ChatPanelProps, Question } from '../types'
 import { MessageList } from './MessageList'
 import { AnswerInput } from './AnswerInput'
 import { TryAgainButton } from './TryAgainButton'
+import { KeepLearningButton } from './KeepLearningButton'
+import { LearningMode } from './LearningMode'
 import styles from './ChatPanel.module.css'
 
 export const ChatPanel: React.FC<ChatPanelProps> = ({
@@ -11,13 +13,16 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
   loading,
   onSend,
   onRetry,
+  onKeepLearning,
   locale,
   questions,
   onAnswersSubmit
 }) => {
   const isInputDisabled = loading || state === 'REQUESTING'
   const showTryAgain = state === 'DENY'
-  const showInput = state !== 'DENY'
+  const showKeepLearning = state === 'ALLOW'
+  const showLearningMode = state === 'CONTINUE'
+  const showInput = state !== 'DENY' && state !== 'ALLOW'
   
   // Determine if we should show questions vs regular chat
   const hasQuestions = questions && questions.length > 0 && state === 'ASK_MORE'
@@ -30,6 +35,11 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
           {locale === 'pt' ? 'Chat' : 'Chat'}
         </h2>
       </div>
+      
+      <LearningMode 
+        active={showLearningMode}
+        locale={locale}
+      />
       
       <MessageList 
         messages={messages}
@@ -52,6 +62,13 @@ export const ChatPanel: React.FC<ChatPanelProps> = ({
       {showTryAgain && (
         <TryAgainButton
           onRetry={onRetry}
+          locale={locale}
+        />
+      )}
+      
+      {showKeepLearning && onKeepLearning && (
+        <KeepLearningButton
+          onKeepLearning={onKeepLearning}
           locale={locale}
         />
       )}

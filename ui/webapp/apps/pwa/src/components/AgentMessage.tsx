@@ -1,6 +1,7 @@
 import React from 'react'
 import { AgentMessageProps } from '../types'
 import { getPersonaAgent } from '../i18n'
+import { TypingAnimation } from './TypingAnimation'
 import styles from './AgentMessage.module.css'
 
 export const AgentMessage: React.FC<AgentMessageProps> = ({ message, locale }) => {
@@ -52,7 +53,15 @@ export const AgentMessage: React.FC<AgentMessageProps> = ({ message, locale }) =
       </div>
       <div className={styles.content}>
         <div className={styles.messageText}>
-          {message.content[locale]}
+          {message.metadata?.isTyping ? (
+            <TypingAnimation 
+              text={message.content[locale]} 
+              speed={60}
+              className={styles.typingText}
+            />
+          ) : (
+            message.content[locale]
+          )}
         </div>
         <div className={styles.metadata}>
           <span className={styles.timestamp}>

@@ -104,7 +104,8 @@
   padding: var(--spacing-md, 16px);
   border: 2px solid var(--color-border-light, #e2e8f0);
   border-radius: var(--radius-md, 8px);
-  background: var(--color-background, #ffffff);
+  background: #ffffff !important; /* Force white background */
+  color: #1f2937 !important; /* Force dark text */
   cursor: pointer;
   transition: all var(--duration-normal, 0.2s) ease;
   text-align: left;
@@ -146,6 +147,7 @@
 
 .optionText {
   flex: 1;
+  color: #1f2937 !important; /* Force dark text for readability */
 }
 
 .checkmark {

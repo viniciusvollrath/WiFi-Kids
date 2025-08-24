@@ -7,16 +7,18 @@ import { AppState, StateTransitions, StateTransitionValidator } from '../types'
 
 /**
  * Valid state transitions for the chat flow
- * IDLE → REQUESTING → (ASK_MORE | ALLOW | DENY)
+ * IDLE → REQUESTING → (ASK_MORE | CONTINUE | ALLOW | DENY)
  * ASK_MORE → REQUESTING
- * ALLOW → IDLE
+ * CONTINUE → REQUESTING
+ * ALLOW → IDLE | CONTINUE (for keep learning functionality)
  * DENY → IDLE
  */
 export const STATE_TRANSITIONS: StateTransitions = {
   IDLE: ['REQUESTING'],
-  REQUESTING: ['ASK_MORE', 'ALLOW', 'DENY'],
+  REQUESTING: ['ASK_MORE', 'CONTINUE', 'ALLOW', 'DENY'],
   ASK_MORE: ['REQUESTING'],
-  ALLOW: ['IDLE'],
+  CONTINUE: ['REQUESTING'],
+  ALLOW: ['IDLE', 'CONTINUE'],
   DENY: ['IDLE']
 }
 
@@ -163,10 +165,10 @@ export class ChatStateMachine {
   }
 
   /**
-   * Check if currently waiting for user input (ASK_MORE)
+   * Check if currently waiting for user input (ASK_MORE or CONTINUE)
    */
   isWaitingForInput(): boolean {
-    return this.currentState === 'ASK_MORE'
+    return this.currentState === 'ASK_MORE' || this.currentState === 'CONTINUE'
   }
 
   /**
@@ -207,6 +209,16 @@ export const getStateUIConfig = (state: AppState) => {
         showChatPanel: true,
         ctaEnabled: false,
         ctaText: { pt: 'Aguardando resposta...', en: 'Waiting for response...' },
+        showTypingIndicator: false,
+        showTryAgainButton: false,
+        inputEnabled: true
+      }
+    
+    case 'CONTINUE':
+      return {
+        showChatPanel: true,
+        ctaEnabled: false,
+        ctaText: { pt: 'Continuar aprendendo...', en: 'Continue learning...' },
         showTypingIndicator: false,
         showTryAgainButton: false,
         inputEnabled: true
