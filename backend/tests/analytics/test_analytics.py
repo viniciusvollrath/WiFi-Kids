@@ -206,7 +206,7 @@ class TestAnalyticsRepository:
         agent_perf = repo.update_agent_performance(
             agent_type="langchain",
             persona="tutor",
-            model="gpt-4o-mini",
+            model="gpt-5",
             performance_data={
                 "successful": True,
                 "response_time": 2.5,
@@ -219,7 +219,7 @@ class TestAnalyticsRepository:
         assert isinstance(agent_perf, AgentPerformance)
         assert agent_perf.agent_type == "langchain"
         assert agent_perf.persona == "tutor"
-        assert agent_perf.model_used == "gpt-4o-mini"
+        assert agent_perf.model_used == "gpt-5"
         assert agent_perf.total_challenges_generated == 1
         assert agent_perf.successful_validations == 1
         assert agent_perf.average_response_time == 2.5
@@ -382,7 +382,7 @@ class TestAnalyticsModels:
         agent_perf = AgentPerformance(
             agent_type="langchain",
             persona="tutor",
-            model_used="gpt-4o-mini",
+            model_used="gpt-5",
             total_challenges_generated=10,
             successful_validations=8,
             failed_validations=2,

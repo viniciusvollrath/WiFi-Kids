@@ -43,7 +43,7 @@ Wi-Fi Kids transforms your home router into an **educational gateway**: kids eng
 ```
 ┌─────────────────┐    ┌──────────────────┐    ┌─────────────┐
 │   PWA Frontend  │    │  FastAPI Backend │    │   OpenAI    │
-│  (React + TS)   │◄──►│ (Python + LangC) │◄──►│   GPT-4o    │
+│  (React + TS)   │◄──►│ (Python + LangC) │◄──►│   GPT-5     │
 └─────────────────┘    └──────────────────┘    └─────────────┘
          │                        │
          │              ┌─────────▼─────────┐
