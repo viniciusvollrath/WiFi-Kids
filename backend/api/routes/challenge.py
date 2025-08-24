@@ -10,7 +10,7 @@ from api.repositories.challenges import load_challenge, decrement_attempts, set_
 from api.repositories.sessions import create_session
 from api.repositories.commands import enqueue_grant_session
 from api.repositories.analytics import AnalyticsRepository
-from api.schemas.challenge import ChallengeAnswerIn, ChallengeApprovedOut, ChallengePendingOut, ChallengeGenerateIn, ChallengeGenerateOut
+from api.schemas.challenge import ChallengeAnswerIn, ChallengeApprovedOut, ChallengePendingOut, ChallengeGenerateIn, ChallengeGenerateOut, ChallengeContinueOut
 from utils.logger import agent_logger
 import time
 
@@ -156,7 +156,7 @@ async def generate_challenge(body: ChallengeGenerateIn, db: Session = Depends(ge
         
         raise HTTPException(status_code=500, detail=f"Failed to generate challenge: {str(e)}")
 
-@router.post("/challenge/answer", response_model=ChallengeApprovedOut | ChallengePendingOut)
+@router.post("/challenge/answer", response_model=ChallengeApprovedOut | ChallengePendingOut | ChallengeContinueOut)
 async def challenge_answer(body: ChallengeAnswerIn, db: Session = Depends(get_db)):
     start_time = time.time()
     
@@ -179,79 +179,110 @@ async def challenge_answer(body: ChallengeAnswerIn, db: Session = Depends(get_db
     
     # Select appropriate agent using router
     agent = agent_router.select_agent(context)
-    validation_result = await agent.validate_answers(ch.payload, [a.dict() for a in body.answers])
+    
+    # IMPORTANT: Validate against the CURRENT question payload, not stale data
+    current_payload = ch.payload.copy()  # Work with current payload
+    
+    # Debug: Log the current question being validated
+    current_question = current_payload.get("questions", [{}])[0]
+    agent_logger.info(f"[DEBUG] Validating against question: '{current_question.get('prompt', 'No prompt')}' for answer: '{body.answers[0].value if body.answers else 'No answer'}'")
+    
+    validation_result = await agent.validate_answers(current_payload, [a.dict() for a in body.answers])
+    
+    # Get session progress from challenge payload
+    session_progress = ch.payload.get("session_progress", {
+        "questions_answered_correctly": 0,
+        "total_questions_required": 2,
+        "questions_attempted": 0
+    })
+    
+    # Update progress
+    session_progress["questions_attempted"] += 1
+    if validation_result["correct"]:
+        session_progress["questions_answered_correctly"] += 1
+    
+    # Debug session progress
+    agent_logger.info(f"[DEBUG] Session progress: {session_progress['questions_answered_correctly']}/{session_progress['total_questions_required']} correct, {session_progress['questions_attempted']} attempted")
     
     # Calculate timing
     response_time = time.time() - start_time
     
-    # Prepare analytics data
-    challenge_data = {
-        "persona": ch.payload["metadata"]["persona"],
-        "subject": ch.payload["metadata"]["subject"],
-        "difficulty": ch.payload["metadata"]["difficulty"],
-        "agent_type": ch.payload["metadata"]["agent_type"],
-        "total_questions": len(ch.payload["questions"]),
-        "correct_answers": sum(1 for answer in body.answers if validation_result["correct"]),
-        "score": validation_result["score"],
-        "passed": validation_result["correct"],
-        "time_to_complete": int(response_time * 1000),  # Convert to milliseconds
-        "time_per_question": response_time / len(ch.payload["questions"]) if ch.payload["questions"] else 0,
-        "feedback": validation_result.get("feedback"),
-        "attempts_made": 3 - ch.attempts_left + 1  # Calculate attempts made
-    }
+    # Update challenge payload with new progress
+    # IMPORTANT: For SQLAlchemy JSON fields, we need to create a new dict to trigger change detection
+    updated_progress_payload = ch.payload.copy()
+    updated_progress_payload["session_progress"] = session_progress
+    ch.payload = updated_progress_payload
+    db.add(ch)
+    db.commit()
     
-    # Create analytics entry
-    analytics_repo = AnalyticsRepository(db)
-    analytics_repo.create_challenge_analytics(
-        challenge_id=ch.id,
-        mac=ch.mac,
-        router_id=ch.router_id,
-        challenge_data=challenge_data
-    )
-    
-    # Update student performance
-    analytics_repo.update_student_performance(
-        mac=ch.mac,
-        router_id=ch.router_id,
-        challenge_result={
-            "passed": validation_result["correct"],
-            "score": validation_result["score"],
-            "subject": ch.payload["metadata"]["subject"],
-            "difficulty": ch.payload["metadata"]["difficulty"]
-        }
-    )
-    
-    # Update learning path
-    analytics_repo.update_learning_path(
-        mac=ch.mac,
-        router_id=ch.router_id,
-        performance_data={
-            "subject": ch.payload["metadata"]["subject"],
-            "score": validation_result["score"],
-            "difficulty": ch.payload["metadata"]["difficulty"]
-        }
-    )
-
-    if validation_result["correct"]:
+    # Check if enough questions answered correctly
+    if session_progress["questions_answered_correctly"] >= session_progress["total_questions_required"]:
+        agent_logger.info(f"[DEBUG] ALLOW condition met: {session_progress['questions_answered_correctly']} >= {session_progress['total_questions_required']}")
+    else:
+        agent_logger.info(f"[DEBUG] CONTINUE condition: {session_progress['questions_answered_correctly']} < {session_progress['total_questions_required']}")
+        
+    if session_progress["questions_answered_correctly"] >= session_progress["total_questions_required"]:
+        # Grant access - session complete
         set_status(db, ch, "passed")
         sess = create_session(db, ch.mac, ch.router_id, ttl_sec=SESSION_TTL_SEC)
         enqueue_grant_session(db, ch.router_id, ch.mac, SESSION_TTL_SEC)
+        
         return ChallengeApprovedOut(
             decision="ALLOW", 
             allowed_minutes=SESSION_TTL_SEC//60, 
             session_id=sess.id,
-            feedback=validation_result.get("feedback")
+            feedback=validation_result.get("feedback", "🎉 Parabéns! Você conseguiu acesso à internet!")
         )
-
-    # Wrong answer -> decrement attempts
-    decrement_attempts(db, ch)
-    reason = "wrong_answer"
-    if ch.attempts_left <= 0:
-        set_status(db, ch, "failed")
     
-    return ChallengePendingOut(
-        decision="DENY", 
-        attempts_left=ch.attempts_left, 
-        reason=reason,
-        feedback=validation_result.get("feedback")
+    # Check if max attempts reached
+    if ch.attempts_left <= 1:  # Last attempt used
+        decrement_attempts(db, ch)
+        set_status(db, ch, "failed")
+        return ChallengePendingOut(
+            decision="DENY", 
+            attempts_left=0, 
+            reason="max_attempts_reached",
+            feedback="❌ Tentativas esgotadas. Tente novamente mais tarde."
+        )
+    
+    # Handle incorrect answers
+    if not validation_result["correct"]:
+        decrement_attempts(db, ch)  # Wrong answer decrements attempts
+        # For wrong answers, keep the same question for retry
+        return ChallengePendingOut(
+            decision="DENY", 
+            attempts_left=ch.attempts_left - 1, 
+            reason="incorrect_answer",
+            feedback=validation_result.get("feedback", "❌ Resposta incorreta. Tente novamente.")
+        )
+    
+    # Answer was correct - need to generate next question since we haven't reached the required total
+    next_challenge = await agent.generate_challenge(context)
+    
+    # Update challenge with new question while preserving session progress
+    # IMPORTANT: For SQLAlchemy JSON fields, we need to create a new dict to trigger change detection
+    updated_payload = ch.payload.copy()
+    updated_payload["questions"] = next_challenge["questions"]
+    updated_payload["answer_key"] = next_challenge["answer_key"]
+    # Keep the existing session_progress (already updated above)
+    
+    # Assign the new dict to trigger SQLAlchemy change detection
+    ch.payload = updated_payload
+    db.add(ch)
+    db.commit()
+    
+    # Log what we just saved to the database
+    saved_question = updated_payload.get("questions", [{}])[0]
+    agent_logger.info(f"[DEBUG] Updated database with NEW question: '{saved_question.get('prompt', 'No prompt')}'")
+    
+    return ChallengeContinueOut(
+        decision="CONTINUE",
+        challenge_id=ch.id,
+        questions=next_challenge["questions"],
+        feedback=validation_result.get("feedback", "✅ Correto! Aqui está sua próxima pergunta:"),
+        progress={
+            "questions_answered_correctly": session_progress["questions_answered_correctly"],
+            "total_questions_required": session_progress["total_questions_required"],
+            "questions_attempted": session_progress["questions_attempted"]
+        }
     )

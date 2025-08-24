@@ -26,20 +26,28 @@ export interface ChatMessage {
 }
 
 // Application state machine states
-export type AppState = 'IDLE' | 'REQUESTING' | 'ASK_MORE' | 'ALLOW' | 'DENY'
+export type AppState = 'IDLE' | 'REQUESTING' | 'ASK_MORE' | 'CONTINUE' | 'ALLOW' | 'DENY'
 
 // Decision response interface (backend API contract)
 export interface DecisionResponse {
-  decision: 'ALLOW' | 'DENY' | 'ASK_MORE'
+  decision: 'ALLOW' | 'DENY' | 'ASK_MORE' | 'CONTINUE'
   message_pt: string
   message_en: string
   allowed_minutes: number
   question_pt: string | null
   question_en: string | null
   questions?: Question[]
+  challenge_id?: string
+  feedback?: string
+  progress?: {
+    questions_answered_correctly: number
+    total_questions_required: number
+    questions_attempted: number
+  }
   metadata: {
     reason: string
     persona: 'tutor' | 'maternal' | 'general'
+    isTyping?: boolean
   }
 }
 
@@ -82,6 +90,7 @@ export interface ChatPanelProps {
   loading: boolean
   onSend: (message: string) => void
   onRetry: () => void
+  onKeepLearning?: () => void
   locale: Locale
   questions?: Question[]
   onAnswersSubmit?: (answers: Record<string, string>) => void

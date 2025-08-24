@@ -210,6 +210,76 @@ export default function App() {
     setCurrentQuestions([])
   }, [])
 
+  // Handle keep learning (Continue Learning button)
+  const handleKeepLearning = useCallback(async () => {
+    if (!chatStateMachine.canTransitionTo('CONTINUE')) {
+      return
+    }
+
+    // Transition to CONTINUE state first
+    chatStateMachine.transition('CONTINUE')
+    
+    // Add a message indicating the user wants to continue learning
+    const continueContent: BilingualContent = {
+      pt: 'Quero continuar aprendendo mais!',
+      en: 'I want to keep learning more!'
+    }
+    
+    messageStore.add('user', continueContent)
+    
+    // Transition to REQUESTING to get a new educational topic
+    if (chatStateMachine.canTransitionTo('REQUESTING')) {
+      chatStateMachine.transition('REQUESTING')
+    }
+
+    try {
+      // Request a new educational challenge from the agent
+      const response = await agentService.requestDecision({ answer: 'continue_learning' })
+      
+      // Store questions if any
+      const questions = response.questions || []
+      setCurrentQuestions(questions)
+      
+      // Add agent response message
+      const responseContent: BilingualContent = {
+        pt: response.message_pt,
+        en: response.message_en
+      }
+      
+      messageStore.add('agent', responseContent, {
+        persona: response.metadata.persona,
+        reason: response.metadata.reason
+      })
+      
+      // Transition to appropriate state based on response
+      if (response.decision === 'ASK_MORE') {
+        chatStateMachine.transition('ASK_MORE')
+      } else if (response.decision === 'CONTINUE') {
+        chatStateMachine.transition('CONTINUE')
+      } else if (response.decision === 'ALLOW') {
+        chatStateMachine.transition('ALLOW')
+      } else {
+        chatStateMachine.transition('DENY')
+      }
+      
+    } catch (error) {
+      console.error('Error requesting continued learning:', error)
+      
+      // Add error message and transition to DENY
+      const errorContent: BilingualContent = {
+        pt: i.network_error,
+        en: t('en').network_error
+      }
+      
+      messageStore.add('agent', errorContent, {
+        persona: 'general',
+        reason: 'error'
+      })
+      
+      chatStateMachine.transition('DENY')
+    }
+  }, [i.network_error])
+
   // Handle language change - update document lang and preserve chat
   const handleLanguageChange = useCallback((newLocale: Locale) => {
     setLocale(newLocale)
@@ -379,6 +449,7 @@ export default function App() {
                   loading={appState === 'REQUESTING'}
                   onSend={handleSendMessage}
                   onRetry={handleRetry}
+                  onKeepLearning={handleKeepLearning}
                   locale={locale}
                   questions={currentQuestions}
                   onAnswersSubmit={(answers) => {

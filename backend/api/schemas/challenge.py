@@ -35,3 +35,10 @@ class ChallengeGenerateOut(BaseModel):
     challenge_id: str
     questions: List[Dict[str, Any]]
     metadata: Dict[str, str]
+
+class ChallengeContinueOut(BaseModel):
+    decision: str = "CONTINUE"
+    challenge_id: str
+    questions: List[Dict[str, Any]]
+    feedback: Optional[str] = None
+    progress: Dict[str, int]  # questions_answered_correctly, total_required, attempted

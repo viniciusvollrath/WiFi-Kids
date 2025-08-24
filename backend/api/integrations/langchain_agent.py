@@ -27,6 +27,16 @@ from api.integrations.types import (
 from api.integrations.validation import answer_validator
 from utils.logger import agent_logger
 
+# Import AI validator with error handling
+try:
+    from api.integrations.ai_validator import ai_validator
+    ai_validator_available = True
+    agent_logger.info("AI validator imported successfully")
+except Exception as e:
+    agent_logger.error(f"Failed to import AI validator: {e}")
+    ai_validator = None
+    ai_validator_available = False
+
 class LangChainAgent:
     """
     LangChain-powered agent for generating educational questions and validating answers.
@@ -60,38 +70,38 @@ class LangChainAgent:
         self.question_prompt = ChatPromptTemplate.from_template("""
         {persona_prompt}
         
-        Generate {num_questions} educational question(s) for a student. The questions should be:
-        - Subject: {subject}
-        - Difficulty: {difficulty}
-        - Language: {language}
-        - Age-appropriate and engaging
+        You are creating ONE SINGLE question for a conversational learning experience.
         
-        For each question, provide:
-        1. A clear, engaging prompt
-        2. Multiple choice options (if applicable)
-        3. The correct answer
-        4. A brief explanation
+        Topic: {subject}
+        Difficulty: {difficulty}
+        Language: {language}
         
-        Return the response as a JSON object with this exact structure:
+        IMPORTANT: Create the question and all options in {language} language only.
+        If language is "en-US" or "en", write everything in English.
+        If language is "pt-BR" or "pt", write everything in Portuguese.
+        
+        Create exactly 1 multiple-choice question with 4 options. Do not create multiple questions.
+        
+        Return ONLY this JSON format:
         {{
             "questions": [
                 {{
                     "id": "q1",
-                    "type": "mc",
-                    "prompt": "Question text here?",
-                    "options": ["Option A", "Option B", "Option C", "Option D"],
+                    "type": "mc", 
+                    "prompt": "Your single question here?",
+                    "options": ["A", "B", "C", "D"],
                     "answer_len": null,
                     "subject": "{subject}",
                     "difficulty": "{difficulty}",
-                    "explanation": "Brief explanation of the answer"
+                    "explanation": "Why this answer is correct"
                 }}
             ],
             "answer_key": {{
-                "q1": "correct_answer_here"
+                "q1": "correct_option_letter"
             }}
         }}
         
-        Make sure the questions are educational, age-appropriate, and match the specified difficulty level.
+        CRITICAL: The "questions" array must contain EXACTLY ONE question object. No more, no less.
         """)
         
         # Answer validation prompt template
@@ -158,7 +168,7 @@ class LangChainAgent:
             # Determine question parameters
             subject = self._select_subject(context)
             difficulty = self._determine_difficulty(context)
-            num_questions = random.randint(1, 3)  # 1-3 questions per challenge
+            num_questions = 1  # Always generate one question at a time for conversational flow
             
             # Prepare prompt
             persona_prompt = self._get_persona_prompt(context["persona"])
@@ -178,6 +188,14 @@ class LangChainAgent:
             questions = response.get("questions", [])
             answer_key = response.get("answer_key", {})
             
+            # ENFORCE SINGLE QUESTION: Only take the first question if AI generates multiple
+            if len(questions) > 1:
+                agent_logger.warning(f"AI generated {len(questions)} questions, keeping only the first one for conversational flow")
+                questions = questions[:1]  # Keep only the first question
+                # Also filter answer_key to match
+                first_question_id = questions[0].get("id", "q1") if questions else "q1"
+                answer_key = {first_question_id: answer_key.get(first_question_id, list(answer_key.values())[0] if answer_key else "")}
+            
             # Ensure proper structure
             structured_questions = []
             for i, q in enumerate(questions):
@@ -194,13 +212,22 @@ class LangChainAgent:
             
             agent_logger.info(f"Generated {len(structured_questions)} questions for subject {subject.value}")
             
+            # For demo: Always require only 1 question for access
+            required_questions = 1
+            
             return {
                 "questions": structured_questions,
                 "answer_key": answer_key,
+                "session_progress": {
+                    "questions_answered_correctly": 0,
+                    "total_questions_required": required_questions,
+                    "questions_attempted": 0
+                },
                 "metadata": {
                     "persona": context["persona"].value,
                     "subject": subject.value,
                     "difficulty": difficulty.value,
+                    "locale": context["locale"],
                     "agent_type": "langchain",
                     "model": OPENAI_MODEL
                 }
@@ -219,9 +246,12 @@ class LangChainAgent:
             total_questions = len(payload["questions"])
             feedback_messages = []
             
-            # Get persona and subject from metadata
+            # Get persona, subject, and language from metadata
             persona = PersonaType(payload.get("metadata", {}).get("persona", "general"))
             subject = SubjectType(payload.get("metadata", {}).get("subject", "math"))
+            # Extract language from metadata, default to Portuguese for backward compatibility
+            metadata = payload.get("metadata", {})
+            language = "en" if "en" in str(metadata.get("locale", "pt-BR")).lower() else "pt"
             
             for answer in answers:
                 # Find the corresponding question
@@ -229,14 +259,42 @@ class LangChainAgent:
                 if not question:
                     continue
                 
-                # Use enhanced validation
-                validation_result = answer_validator.validate_answer(
-                    question=question,
-                    student_answer=answer["value"],
-                    correct_answer=payload["answer_key"].get(answer["id"], ""),
-                    persona=persona,
-                    subject=subject
-                )
+                # Use AI-powered validation for flexible answer evaluation
+                if ai_validator_available and ai_validator:
+                    try:
+                        # Try AI validation first
+                        agent_logger.info(f"Attempting AI validation for question {question.get('id')} with answer '{answer['value']}'")
+                        validation_result = ai_validator.validate_answer(
+                            question=question,
+                            student_answer=answer["value"],
+                            persona=persona,
+                            language=language
+                        )
+                        agent_logger.info(f"AI validation result: correct={validation_result.get('correct')}, score={validation_result.get('score')}, feedback='{validation_result.get('feedback', '')}'")
+                    except Exception as e:
+                        agent_logger.error(f"AI validation failed, falling back to basic validation: {e}")
+                        import traceback
+                        agent_logger.error(f"Full traceback: {traceback.format_exc()}")
+                        # Fallback to basic validation
+                        validation_result = answer_validator.validate_answer(
+                            question=question,
+                            student_answer=answer["value"],
+                            correct_answer=payload["answer_key"].get(answer["id"], ""),
+                            persona=persona,
+                            subject=subject
+                        )
+                        agent_logger.info(f"Basic validation result: correct={validation_result.get('correct')}, score={validation_result.get('score')}")
+                else:
+                    # AI validator not available, use basic validation
+                    agent_logger.info(f"AI validator not available, using basic validation for question {question.get('id')} with answer '{answer['value']}'")
+                    validation_result = answer_validator.validate_answer(
+                        question=question,
+                        student_answer=answer["value"],
+                        correct_answer=payload["answer_key"].get(answer["id"], ""),
+                        persona=persona,
+                        subject=subject
+                    )
+                    agent_logger.info(f"Basic validation result: correct={validation_result.get('correct')}, score={validation_result.get('score')}")
                 
                 total_score += validation_result["score"]
                 if validation_result.get("feedback"):
@@ -254,6 +312,8 @@ class LangChainAgent:
             }
             threshold = threshold_map.get(persona, 0.75)
             correct = final_score >= threshold
+            
+            agent_logger.info(f"Final validation: score={final_score:.2f}, threshold={threshold}, correct={correct}, total_questions={total_questions}")
             
             # Combine feedback
             combined_feedback = " ".join(feedback_messages) if feedback_messages else (

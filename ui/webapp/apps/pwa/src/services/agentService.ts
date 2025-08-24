@@ -75,8 +75,8 @@ export class AgentService {
     try {
       console.log('[AgentService] Attempting real backend connection...')
       
-      if (!answer) {
-        // Step 1: First request - generate challenge (kid clicked "Access Internet")
+      if (!answer || answer === 'continue_learning') {
+        // Step 1: Generate challenge - either first time or continue learning
         const result = await this.generateChallenge(timeout)
         console.log('[AgentService] Real backend challenge generation success!')
         return result
@@ -243,11 +243,33 @@ export class AgentService {
           persona: 'tutor'
         }
       }
+    } else if (validationResult.decision === 'CONTINUE') {
+      // Handle correct answers that need more questions
+      const questions = validationResult.questions || []
+      const hasProgress = validationResult.progress && validationResult.progress.questions_answered_correctly > 0
+      
+      const successFeedback = hasProgress ? '✅ Correto! ' : ''
+      const continueFeedback = validationResult.feedback || 'Vamos continuar!'
+      
+      return {
+        decision: 'ASK_MORE',
+        message_pt: `${successFeedback}${continueFeedback} ${this.formatQuestionsAsMessage(questions, 'pt')}`,
+        message_en: `${successFeedback}${continueFeedback} ${this.formatQuestionsAsMessage(questions, 'en')}`,
+        allowed_minutes: 0,
+        question_pt: questions[0]?.prompt || null,
+        question_en: questions[0]?.prompt || null,
+        questions: questions,
+        metadata: {
+          reason: hasProgress ? 'partial_credit' : 'continue_learning',
+          persona: 'tutor'
+        }
+      }
     } else {
+      // Handle wrong answers (DENY) 
       return {
         decision: 'DENY',
-        message_pt: `❌ Não foi dessa vez! ${validationResult.feedback || 'Tente novamente.'} Tentativas restantes: ${validationResult.attempts_left || 0}`,
-        message_en: `❌ Not this time! ${validationResult.feedback || 'Try again.'} Attempts remaining: ${validationResult.attempts_left || 0}`,
+        message_pt: `❌ ${validationResult.feedback || 'Não foi dessa vez! Tente novamente.'}`,
+        message_en: `❌ ${validationResult.feedback || 'Not this time! Try again.'}`,
         allowed_minutes: 0,
         question_pt: null,
         question_en: null,
