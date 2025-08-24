@@ -1,14 +1,24 @@
 import React, { useEffect, useMemo, useState, useCallback } from 'react'
 import { t } from './i18n'
-import { Locale, AppState, BilingualContent } from './types'
+import { Locale, AppState, BilingualContent, Question, Challenge, ChallengeProgress as ChallengeProgressType } from './types'
 import { LanguageToggle, ChatPanel, SimulationBadge } from './components'
+import { ChallengeProgress } from './components/ChallengeProgress'
+import { PersonaSelector } from './components/PersonaSelector'
 import { ErrorBoundary } from './components/ErrorBoundary'
 import { checkBrowserSupport, logError, createAppError } from './utils/errorHandling'
 import { agentService } from './services/agentService'
 import { messageStore } from './services/messageStore'
 import { chatStateMachine, getStateUIConfig } from './services/stateMachine'
+import { challengeStore } from './services/challengeStore'
+import { config } from './services/config'
 
 const inferLocale = (): Locale => {
+  // Use configured default locale if available, otherwise infer from browser
+  const configuredLocale = config.getDefaultLocale()
+  if (configuredLocale) {
+    return configuredLocale
+  }
+  
   const lang = navigator.language.toLowerCase()
   return lang.startsWith('pt') ? 'pt' : 'en'
 }
@@ -19,6 +29,10 @@ export default function App() {
   const [messages, setMessages] = useState(messageStore.messages)
   const [ctaDisabledUntil, setCtaDisabledUntil] = useState<number>(0)
   const [browserSupported, setBrowserSupported] = useState(true)
+  const [currentQuestions, setCurrentQuestions] = useState<Question[]>([])
+  const [currentChallenge, setCurrentChallenge] = useState<Challenge | null>(null)
+  const [challengeProgress, setChallengeProgress] = useState<ChallengeProgressType | null>(null)
+  const [currentPersona, setCurrentPersona] = useState<'tutor' | 'maternal' | 'general'>(config.getDefaultPersona())
   
   const i = useMemo(() => t(locale), [locale])
   const uiConfig = useMemo(() => getStateUIConfig(appState), [appState])
@@ -45,11 +59,13 @@ export default function App() {
     return unsubscribe
   }, [])
 
+  // Challenge state management - DISABLED FOR MVP
+
   // Add initial greeting message when chat panel first opens
   const addGreetingMessage = useCallback(() => {
     const greetingContent: BilingualContent = {
-      pt: i.greeting,
-      en: t('en').greeting
+      pt: i.greeting_general, // Use general greeting as default
+      en: t('en').greeting_general
     }
     
     messageStore.add('agent', greetingContent, {
@@ -57,7 +73,7 @@ export default function App() {
       reason: 'greeting'
     })
     setMessages([...messageStore.messages])
-  }, [i.greeting])
+  }, [i.greeting_general])
 
   // Handle access request (CTA click)
   const handleAccessRequest = useCallback(async () => {
@@ -76,6 +92,10 @@ export default function App() {
     try {
       // Request decision from agent service
       const response = await agentService.requestDecision()
+      
+      // Store questions - simplified for MVP
+      const questions = response.questions || []
+      setCurrentQuestions(questions)
       
       // Add agent response message
       const responseContent: BilingualContent = {
@@ -138,6 +158,10 @@ export default function App() {
       // Send message as answer to agent service
       const response = await agentService.requestDecision({ answer: message })
       
+      // Store questions - simplified for MVP
+      const questions = response.questions || []
+      setCurrentQuestions(questions)
+      
       // Add agent response
       const responseContent: BilingualContent = {
         pt: response.message_pt,
@@ -176,13 +200,14 @@ export default function App() {
     }
   }, [i.network_error])
 
-  // Handle retry (Try Again button)
+  // Handle retry (Try Again button) - simplified for MVP
   const handleRetry = useCallback(() => {
     // Clear messages and reset state machine
     messageStore.clear()
     chatStateMachine.reset()
     setMessages([])
     setCtaDisabledUntil(0)
+    setCurrentQuestions([])
   }, [])
 
   // Handle language change - update document lang and preserve chat
@@ -192,6 +217,17 @@ export default function App() {
     
     // Update messages display (they already contain bilingual content)
     setMessages([...messageStore.messages])
+  }, [])
+
+  // Handle persona change
+  const handlePersonaChange = useCallback((persona: 'tutor' | 'maternal' | 'general') => {
+    setCurrentPersona(persona)
+    agentService.setPersona(persona)
+    
+    // Log the change for debugging if enabled
+    if (config.shouldShowDebugInfo()) {
+      console.log(`[App] Persona changed to: ${persona}`)
+    }
   }, [])
 
   useEffect(() => {
@@ -235,6 +271,8 @@ export default function App() {
         locale={locale}
       />
       
+      {/* Debug Information - DISABLED FOR MVP */}
+      
       <div className="container">
         <div className="card">
           {/* Header with title and language toggle */}
@@ -258,6 +296,8 @@ export default function App() {
           }}>
             {i.subtitle}
           </p>
+
+          {/* Persona Selector - DISABLED FOR MVP */}
 
           {/* Access Internet CTA */}
           <button
@@ -331,6 +371,8 @@ export default function App() {
                   </div>
                 }
               >
+                {/* Challenge Progress - DISABLED FOR MVP */}
+                
                 <ChatPanel
                   state={appState}
                   messages={messages}
@@ -338,6 +380,12 @@ export default function App() {
                   onSend={handleSendMessage}
                   onRetry={handleRetry}
                   locale={locale}
+                  questions={currentQuestions}
+                  onAnswersSubmit={(answers) => {
+                    // Convert structured answers to simple text for MVP
+                    const answerText = Object.values(answers).join(', ')
+                    handleSendMessage(answerText)
+                  }}
                 />
               </ErrorBoundary>
             </div>

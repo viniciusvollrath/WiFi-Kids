@@ -16,4 +16,10 @@ export default defineConfig({
     environment: 'jsdom',
     setupFiles: ['./src/test/setup.ts'],
   },
+  define: {
+    // Inject build-time variables
+    __BUILD_TIME__: JSON.stringify(new Date().toISOString()),
+    __VERSION__: JSON.stringify(process.env.npm_package_version || '0.1.0'),
+  },
+  envPrefix: ['VITE_'], // Only expose env vars starting with VITE_
 })

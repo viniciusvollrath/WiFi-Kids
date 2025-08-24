@@ -1,0 +1,231 @@
+/* Challenge Progress Container */
+.progressContainer {
+  background: var(--color-background, #ffffff);
+  border: 1px solid var(--color-border-light, #e2e8f0);
+  border-radius: var(--radius-md, 8px);
+  padding: var(--spacing-md, 16px);
+  margin-bottom: var(--spacing-md, 16px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Header Section */
+.header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-md, 16px);
+}
+
+.challengeInfo {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm, 8px);
+}
+
+.difficulty {
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: 500;
+  color: var(--color-text-muted, #64748b);
+  text-transform: capitalize;
+}
+
+.subject {
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--color-text, #1e293b);
+  font-weight: 600;
+}
+
+/* Status Indicators */
+.status {
+  font-size: var(--font-size-sm, 0.875rem);
+  font-weight: 500;
+  padding: var(--spacing-xs, 4px) var(--spacing-sm, 8px);
+  border-radius: var(--radius-sm, 4px);
+  text-transform: uppercase;
+  letter-spacing: 0.025em;
+}
+
+.statusActive {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.statusValidating {
+  background: #fef3cd;
+  color: #92400e;
+}
+
+.statusCompleted {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.statusFailed {
+  background: #fee2e2;
+  color: #dc2626;
+}
+
+/* Progress Section */
+.progressSection {
+  margin-bottom: var(--spacing-md, 16px);
+}
+
+.progressInfo {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: var(--spacing-xs, 4px);
+}
+
+.progressText {
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--color-text, #1e293b);
+  font-weight: 500;
+}
+
+.progressPercentage {
+  font-size: var(--font-size-sm, 0.875rem);
+  color: var(--color-primary, #7c3aed);
+  font-weight: 600;
+}
+
+/* Progress Bar */
+.progressBar {
+  width: 100%;
+  height: 8px;
+  background: var(--color-background-muted, #f8fafc);
+  border-radius: var(--radius-sm, 4px);
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--color-primary, #7c3aed), #8b5cf6);
+  border-radius: var(--radius-sm, 4px);
+  transition: width var(--duration-normal, 0.2s) ease;
+}
+
+/* Stats Section */
+.stats {
+  display: flex;
+  gap: var(--spacing-lg, 24px);
+  justify-content: space-between;
+}
+
+.stat {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  flex: 1;
+}
+
+.statLabel {
+  font-size: var(--font-size-xs, 0.75rem);
+  color: var(--color-text-muted, #64748b);
+  margin-bottom: var(--spacing-xs, 4px);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.statValue {
+  font-size: var(--font-size-base, 1rem);
+  color: var(--color-text, #1e293b);
+  font-weight: 600;
+}
+
+/* Warning styles for last chance */
+.lastChance {
+  border-left: 3px solid #f59e0b;
+  background: #fef3c7;
+  padding: var(--spacing-sm, 8px);
+  border-radius: var(--radius-sm, 4px);
+  flex: 1;
+}
+
+.warningText {
+  font-size: var(--font-size-sm, 0.875rem);
+  color: #92400e;
+  font-weight: 500;
+  text-align: center;
+}
+
+/* Responsive Design */
+@media (max-width: 640px) {
+  .progressContainer {
+    padding: var(--spacing-sm, 8px);
+    margin-bottom: var(--spacing-sm, 8px);
+  }
+  
+  .header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: var(--spacing-xs, 4px);
+  }
+  
+  .challengeInfo {
+    order: 2;
+  }
+  
+  .status {
+    order: 1;
+    align-self: flex-end;
+  }
+  
+  .stats {
+    gap: var(--spacing-md, 16px);
+  }
+  
+  .stat {
+    align-items: flex-start;
+  }
+}
+
+/* Accessibility and Motion */
+@media (prefers-reduced-motion: reduce) {
+  .progressFill {
+    transition: none;
+  }
+}
+
+/* High Contrast Mode */
+@media (prefers-contrast: high) {
+  .progressContainer {
+    border-width: 2px;
+  }
+  
+  .progressBar {
+    border: 1px solid var(--color-border, #d1d5db);
+  }
+  
+  .status {
+    border: 1px solid currentColor;
+  }
+}
+
+/* Loading Animation for Validating State */
+.statusValidating::after {
+  content: '';
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  margin-left: var(--spacing-xs, 4px);
+  border: 2px solid transparent;
+  border-top: 2px solid currentColor;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .statusValidating::after {
+    animation: none;
+    content: '...';
+    border: none;
+    width: auto;
+    height: auto;
+  }
+}

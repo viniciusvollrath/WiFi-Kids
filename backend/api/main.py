@@ -1,8 +1,6 @@
 # api/main.py
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from api.core.settings import CORS_ORIGINS
-
 from api.routes.access import router as access_router
 from api.routes.challenge import router as challenge_router
 from api.routes.commands import router as commands_router
@@ -11,10 +9,11 @@ from api.routes.analytics import router as analytics_router
 
 app = FastAPI(title="WiFi-Kids API", version="0.1.0")
 
+# Use the exact same CORS configuration that worked in test_cors.py
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # Allow all origins for local development
-    allow_credentials=False,  # Must be False when allow_origins=["*"]
+    allow_origins=["http://localhost:5174"],
+    allow_credentials=False,
     allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
