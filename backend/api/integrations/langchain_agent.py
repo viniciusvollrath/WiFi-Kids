@@ -98,6 +98,12 @@ class LangChainAgent:
         
         Create exactly 1 multiple-choice question with 4 realistic options where only one is clearly correct.
         
+        CRITICAL FORMATTING RULE: Do NOT include option letters (A, B, C, D) or any prefixes in the option text. 
+        - WRONG: "A) The Egyptians", "B) The Romans"
+        - CORRECT: "The Egyptians", "The Romans"
+        
+        The frontend will automatically add A), B), C), D) labels to your options.
+        
         Return ONLY this JSON format:
         {{
             "questions": [
@@ -105,7 +111,7 @@ class LangChainAgent:
                     "id": "q1",
                     "type": "mc", 
                     "prompt": "Your engaging, conversational question here?",
-                    "options": ["Option A text", "Option B text", "Option C text", "Option D text"],
+                    "options": ["First option text", "Second option text", "Third option text", "Fourth option text"],
                     "answer_len": null,
                     "subject": "{subject}",
                     "difficulty": "{difficulty}",
