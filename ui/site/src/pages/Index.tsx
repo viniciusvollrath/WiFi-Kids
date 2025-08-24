@@ -65,7 +65,7 @@ const Index = () => {
                 asChild
                 className="text-lg px-8 py-4"
               >
-                <a href="http://admin.wifikids.fun" target="_blank" rel="noopener noreferrer">
+                <a href="http://app.wifikids.fun" target="_blank" rel="noopener noreferrer">
                   <ExternalLink className="w-5 h-5 mr-2" />
                   Try the Prototype
                 </a>
@@ -138,10 +138,7 @@ const Index = () => {
               <Card className="bg-gradient-card border-0 shadow-strong">
                 <CardContent className="p-8">
                   <div className="aspect-video bg-muted rounded-lg flex items-center justify-center">
-                    <div className="text-center space-y-4">
-                      <Play className="w-16 h-16 text-primary mx-auto" />
-                        <iframe width="560" height="315" src="https://www.youtube.com/embed/IxlBtQ2FvvU?si=SYKQSjS7dV0CSpje" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
-                    </div>
+                      <iframe width="100%" height="100%" src="https://www.youtube.com/embed/IxlBtQ2FvvU?si=SYKQSjS7dV0CSpje" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
                   </div>
                 </CardContent>
               </Card>
