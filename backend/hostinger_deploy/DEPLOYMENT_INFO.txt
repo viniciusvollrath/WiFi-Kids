@@ -1,0 +1,20 @@
+WiFi-Kids Backend Deployment Package
+Generated on: Sun, Aug 24, 2025 11:36:59 AM
+
+Files included:
+- passenger_wsgi.py (WSGI entry point for Hostinger)
+- app.py (Alternative entry point)
+- requirements.txt (Production dependencies)
+- .env (Environment variables - EDIT THIS FILE!)
+- api/ (FastAPI application)
+- alembic.ini & alembic/ (Database migrations)
+- .htaccess (Apache configuration)
+
+Next steps:
+1. Upload all files to your Hostinger hosting
+2. Edit .env file with your actual values
+3. Install dependencies: pip install -r requirements.txt --user  
+4. Run migrations: alembic upgrade head
+5. Configure Python app in Hostinger control panel
+
+See DEPLOYMENT_HOSTINGER.md for detailed instructions.
