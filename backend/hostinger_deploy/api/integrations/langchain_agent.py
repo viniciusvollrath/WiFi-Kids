@@ -5,9 +5,7 @@ import time
 from typing import Dict, List, Optional
 from langchain_openai import ChatOpenAI
 from langchain_core.prompts import ChatPromptTemplate
-from langchain_core.output_parsers import PydanticOutputParser
-from pydantic import BaseModel, Field
-from typing import List
+from langchain_core.output_parsers import JsonOutputParser
 
 from api.core.settings import (
     OPENAI_API_KEY, 
@@ -29,21 +27,6 @@ from api.integrations.types import (
 )
 from api.integrations.validation import answer_validator
 from utils.logger import agent_logger
-
-# Pydantic models for structured output
-class QuestionModel(BaseModel):
-    id: str = Field(description="Question ID (e.g., 'q1')")
-    type: str = Field(description="Question type, always 'mc' for multiple choice")
-    prompt: str = Field(description="The question text")
-    options: List[str] = Field(description="List of 4 answer options")
-    answer_len: Optional[int] = Field(default=None, description="Answer length (optional)")
-    subject: str = Field(description="Subject area")
-    difficulty: str = Field(description="Difficulty level")
-    explanation: str = Field(description="Explanation of the correct answer")
-
-class ChallengeResponse(BaseModel):
-    questions: List[QuestionModel] = Field(description="List containing exactly 1 question")
-    answer_key: Dict[str, str] = Field(description="Mapping of question ID to correct answer")
 
 # Import AI validator with error handling
 try:
@@ -140,9 +123,7 @@ class LangChainAgent:
             }}
         }}
         
-        CRITICAL: The "questions" array must contain EXACTLY ONE question object.
-
-        {format_instructions}
+        CRITICAL: The "questions" array must contain EXACTLY ONE question object. Return valid JSON only.
         """)
         
         # Answer validation prompt template
@@ -169,11 +150,7 @@ class LangChainAgent:
         Be encouraging and educational in your feedback, especially for incorrect answers.
         """)
         
-        # Configure Pydantic output parser for structured responses
-        self.output_parser = PydanticOutputParser(pydantic_object=ChallengeResponse)
-        
-        # Get format instructions from Pydantic parser
-        self.format_instructions = self.output_parser.get_format_instructions()
+        self.output_parser = JsonOutputParser()
     
     def _get_persona_prompt(self, persona: PersonaType) -> str:
         """Get the system prompt for the specified persona."""
@@ -248,15 +225,6 @@ class LangChainAgent:
         try:
             agent_logger.info(f"Generating LangChain challenge for {context['mac']} with persona {context['persona']}")
             
-            # DEBUG: Log OpenAI configuration
-            agent_logger.error(f"=== OPENAI CONFIG DEBUG ===")
-            agent_logger.error(f"API Key present: {'Yes' if OPENAI_API_KEY else 'No'}")
-            agent_logger.error(f"API Key length: {len(OPENAI_API_KEY) if OPENAI_API_KEY else 0}")
-            agent_logger.error(f"Model: {OPENAI_MODEL}")
-            agent_logger.error(f"Temperature: {OPENAI_TEMPERATURE}")
-            agent_logger.error(f"Max tokens: {OPENAI_MAX_TOKENS}")
-            agent_logger.error(f"=== END CONFIG DEBUG ===")
-            
             # Determine question parameters
             subject = self._select_subject(context)
             difficulty = self._determine_difficulty(context)
@@ -272,94 +240,46 @@ class LangChainAgent:
             # Generate questions using LangChain
             chain = self.question_prompt | self.llm | self.output_parser
             
-            # DEBUG: Get raw response from LLM first to see what's being returned
-            try:
-                llm_only_chain = self.question_prompt | self.llm
-                raw_response = await llm_only_chain.ainvoke({
-                    "persona_prompt": persona_prompt,
-                    "conversation_context": conversation_context,
-                    "num_questions": num_questions,
-                    "subject": subject.value,
-                    "difficulty": difficulty.value,
-                    "language": context["locale"],
-                    "format_instructions": self.format_instructions
-                })
-                
-                agent_logger.error(f"=== RAW LLM RESPONSE DEBUG ===")
-                agent_logger.error(f"Response type: {type(raw_response)}")
-                agent_logger.error(f"Raw content: '{raw_response.content}'")
-                agent_logger.error(f"Content length: {len(raw_response.content) if raw_response.content else 0}")
-                agent_logger.error(f"Response dict: {raw_response.dict() if hasattr(raw_response, 'dict') else 'No dict method'}")
-                agent_logger.error(f"=== END RAW RESPONSE ===")
-                
-                # Try to parse manually to see exact error
-                try:
-                    import json
-                    parsed_json = json.loads(raw_response.content)
-                    agent_logger.error(f"=== JSON PARSE SUCCESS ===")
-                    agent_logger.error(f"Parsed JSON: {parsed_json}")
-                    agent_logger.error(f"=== END JSON PARSE ===")
-                except json.JSONDecodeError as json_err:
-                    agent_logger.error(f"=== JSON PARSE ERROR ===")
-                    agent_logger.error(f"JSON Error: {str(json_err)}")
-                    agent_logger.error(f"=== END JSON PARSE ERROR ===")
-
-                # Now try the full chain with parser
-                response = await chain.ainvoke({
-                    "persona_prompt": persona_prompt,
-                    "conversation_context": conversation_context,
-                    "num_questions": num_questions,
-                    "subject": subject.value,
-                    "difficulty": difficulty.value,
-                    "language": context["locale"],
-                    "format_instructions": self.format_instructions
-                })
-
-            except Exception as parse_error:
-                agent_logger.error(f"=== PARSING ERROR DEBUG ===")
-                agent_logger.error(f"Parse error: {str(parse_error)}")
-                agent_logger.error(f"Error type: {type(parse_error)}")
-                
-                # Try to get the exact validation error
-                if hasattr(parse_error, 'llm_output'):
-                    agent_logger.error(f"LLM output: {parse_error.llm_output}")
-                if hasattr(parse_error, 'observation'):
-                    agent_logger.error(f"Observation: {parse_error.observation}")
-                    
-                agent_logger.error(f"=== END PARSING ERROR ===")
-                raise
+            response = await chain.ainvoke({
+                "persona_prompt": persona_prompt,
+                "conversation_context": conversation_context,
+                "num_questions": num_questions,
+                "subject": subject.value,
+                "difficulty": difficulty.value,
+                "language": context["locale"]
+            })
             
-            # Validate and structure the response (Pydantic object, not dict)
-            questions = response.questions
-            answer_key = response.answer_key
+            # Validate and structure the response
+            questions = response.get("questions", [])
+            answer_key = response.get("answer_key", {})
             
             # ENFORCE SINGLE QUESTION: Only take the first question if AI generates multiple
             if len(questions) > 1:
                 agent_logger.warning(f"AI generated {len(questions)} questions, keeping only the first one for conversational flow")
                 questions = questions[:1]  # Keep only the first question
                 # Also filter answer_key to match
-                first_question_id = questions[0].id if questions else "q1"
+                first_question_id = questions[0].get("id", "q1") if questions else "q1"
                 answer_key = {first_question_id: answer_key.get(first_question_id, list(answer_key.values())[0] if answer_key else "")}
             
             # Ensure proper structure
             structured_questions = []
             for i, q in enumerate(questions):
                 structured_questions.append({
-                    "id": q.id,
-                    "type": q.type,
-                    "prompt": q.prompt,
-                    "options": q.options,
-                    "answer_len": q.answer_len,
-                    "subject": SubjectType(q.subject),
-                    "difficulty": DifficultyLevel(q.difficulty),
-                    "explanation": q.explanation
+                    "id": q.get("id", f"q{i+1}"),
+                    "type": q.get("type", "mc"),
+                    "prompt": q.get("prompt", ""),
+                    "options": q.get("options"),
+                    "answer_len": q.get("answer_len"),
+                    "subject": SubjectType(q.get("subject", subject.value)),
+                    "difficulty": DifficultyLevel(q.get("difficulty", difficulty.value)),
+                    "explanation": q.get("explanation", "")
                 })
             
             agent_logger.info(f"Generated {len(structured_questions)} questions for subject {subject.value}")
             
             # Add question to conversation history for future context
             if structured_questions:
-                question_text = structured_questions[0]["prompt"]
+                question_text = structured_questions[0].get("prompt", "")
                 self._add_to_conversation_history(context["mac"], "assistant", f"Question: {question_text}")
             
             # For demo: Always require only 1 question for access

@@ -63,8 +63,7 @@ class AnalyticsRepository:
             performance.learning_streak = 0
         
         # Update average score
-        current_avg = performance.average_score or 0.0  # Handle None case
-        total_score = current_avg * (performance.total_challenges - 1) + challenge_result["score"]
+        total_score = performance.average_score * (performance.total_challenges - 1) + challenge_result["score"]
         performance.average_score = total_score / performance.total_challenges
         
         # Update subject performance
@@ -82,8 +81,7 @@ class AnalyticsRepository:
             subject_data["correct"] += 1
         
         # Update subject average score
-        current_subject_avg = subject_data["avg_score"] or 0.0  # Handle None case
-        total_subject_score = current_subject_avg * (subject_data["total"] - 1) + challenge_result["score"]
+        total_subject_score = subject_data["avg_score"] * (subject_data["total"] - 1) + challenge_result["score"]
         subject_data["avg_score"] = total_subject_score / subject_data["total"]
         
         # Update difficulty history
@@ -341,12 +339,6 @@ class AnalyticsRepository:
             agent_perf.failed_validations = 0
         if agent_perf.average_response_time is None:
             agent_perf.average_response_time = 0.0
-        if agent_perf.average_student_score is None:
-            agent_perf.average_student_score = 0.0
-        if agent_perf.usage_by_subject is None:
-            agent_perf.usage_by_subject = {}
-        if agent_perf.usage_by_difficulty is None:
-            agent_perf.usage_by_difficulty = {}
         
         # Update metrics
         agent_perf.total_challenges_generated += 1
