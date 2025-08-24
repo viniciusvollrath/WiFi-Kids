@@ -412,7 +412,7 @@ CHALLENGE_REQUIRED=true
 CHALLENGE_ATTEMPTS=2
 
 # CORS
-CORS_ORIGINS=https://app.wifikids.com,http://localhost:5173
+CORS_ORIGINS=https://app.wifikids.com,http://localhost:5174
 
 # Timezone
 DEFAULT_TIMEZONE=America/Sao_Paulo

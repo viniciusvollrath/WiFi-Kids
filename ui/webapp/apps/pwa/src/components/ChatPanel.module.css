@@ -11,7 +11,7 @@
 }
 
 .header {
-  padding: var(--spacing-lg) var(--spacing-xl);
+  padding: var(--spacing-md) var(--spacing-lg);
   background-color: var(--color-background-muted);
   border-bottom: 1px solid var(--color-border);
   flex-shrink: 0;

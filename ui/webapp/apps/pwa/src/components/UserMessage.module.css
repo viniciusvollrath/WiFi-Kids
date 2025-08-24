@@ -3,9 +3,10 @@
   align-items: flex-start;
   gap: var(--spacing-md);
   margin-bottom: var(--spacing-lg);
-  max-width: 80%;
+  max-width: 90%;
   margin-left: auto;
   flex-direction: row-reverse;
+  animation: slideInFromRight var(--duration-slow) ease-out;
 }
 
 .avatar {
@@ -56,12 +57,12 @@
 /* Responsive design - mobile first approach */
 @media (max-width: 480px) {
   .userMessage {
-    max-width: 90%;
+    max-width: 95%;
   }
   
   .messageText {
-    font-size: var(--font-size-sm);
-    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: var(--font-size-base);
+    padding: var(--spacing-md) var(--spacing-lg);
   }
   
   .avatar {
@@ -71,16 +72,44 @@
   }
 }
 
+@media (min-width: 481px) and (max-width: 767px) {
+  .userMessage {
+    max-width: 85%;
+  }
+  
+  .messageText {
+    font-size: var(--font-size-base);
+    padding: var(--spacing-md) var(--spacing-lg);
+  }
+}
+
 @media (min-width: 768px) {
+  .userMessage {
+    max-width: 80%;
+  }
+  
   .messageText {
     font-size: var(--font-size-lg);
     padding: var(--spacing-lg) var(--spacing-xl);
   }
 }
 
+/* Slide-in animation for user messages */
+@keyframes slideInFromRight {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
 /* Accessibility improvements */
 @media (prefers-reduced-motion: reduce) {
   .userMessage {
+    animation: none;
     transition: none;
   }
 }
