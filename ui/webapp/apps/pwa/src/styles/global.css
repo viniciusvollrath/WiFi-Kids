@@ -211,13 +211,28 @@ input, textarea {
 /* Utility classes for responsive design */
 .container {
   width: 100%;
-  max-width: 520px;
+  max-width: 100%;
   margin: 0 auto;
-  padding: var(--spacing-lg);
+  padding: var(--spacing-sm);
+}
+
+@media (min-width: 480px) {
+  .container {
+    max-width: 95%;
+    padding: var(--spacing-md);
+  }
 }
 
 @media (min-width: 768px) {
   .container {
+    max-width: 600px;
+    padding: var(--spacing-lg);
+  }
+}
+
+@media (min-width: 1024px) {
+  .container {
+    max-width: 720px;
     padding: var(--spacing-xl);
   }
 }

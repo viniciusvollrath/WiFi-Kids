@@ -37,7 +37,7 @@ pnpm dev
 cd apps/pwa
 pnpm dev
 ```
-- PWA runs on http://localhost:5173
+- PWA runs on http://localhost:5174
 - Backend runs on http://localhost:3001
 
 ### 4) Docker (optional)

@@ -1,5 +1,5 @@
 .chatInputContainer {
-  padding: var(--spacing-lg);
+  padding: var(--spacing-md);
   border-top: 1px solid var(--color-border);
   background-color: var(--color-background);
 }

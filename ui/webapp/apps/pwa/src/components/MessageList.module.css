@@ -1,7 +1,7 @@
 .messageList {
   flex: 1;
   overflow-y: auto;
-  padding: var(--spacing-lg);
+  padding: var(--spacing-sm) var(--spacing-md);
   min-height: 320px; /* Mobile-first minimum height */
   max-height: 60vh;
   background-color: var(--color-background);
@@ -34,9 +34,15 @@
 }
 
 /* Responsive design - mobile first approach */
+@media (min-width: 480px) {
+  .messageList {
+    padding: var(--spacing-md) var(--spacing-lg);
+  }
+}
+
 @media (min-width: 768px) {
   .messageList {
-    padding: var(--spacing-xl);
+    padding: var(--spacing-lg) var(--spacing-xl);
     min-height: 400px;
     max-height: 65vh;
   }

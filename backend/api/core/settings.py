@@ -27,7 +27,7 @@ def _parse_float(v: str, default: float) -> float:
         return default
 
 def _parse_cors(origins: str) -> List[str]:
-    # "https://app.wifikids.com,http://localhost:5173"
+    # "https://app.wifikids.com,http://localhost:5174"
     return [o.strip() for o in origins.split(",") if o.strip()]
 
 # === Leitura das variáveis de ambiente (.env em dev) ===
@@ -36,7 +36,7 @@ ACCESS_WINDOWS   = _getenv("ACCESS_WINDOWS", "07:00-21:00")
 SESSION_TTL_SEC  = _parse_int(_getenv("SESSION_TTL_SEC", "900"), 900)
 CHALLENGE_REQUIRED = _parse_bool(_getenv("CHALLENGE_REQUIRED", "true"))
 CHALLENGE_ATTEMPTS = _parse_int(_getenv("CHALLENGE_ATTEMPTS", "2"), 2)
-CORS_ORIGINS = _parse_cors(_getenv("CORS_ORIGINS", "https://app.wifikids.com,http://localhost:5173,http://localhost:3000,null"))
+CORS_ORIGINS = _parse_cors(_getenv("CORS_ORIGINS", "https://app.wifikids.com,http://localhost:5174,http://localhost:3000,null"))
 
 # usado pela app; Alembic usa alembic.ini
 DATABASE_URL = _getenv("DATABASE_URL", "sqlite:///./dev.db")

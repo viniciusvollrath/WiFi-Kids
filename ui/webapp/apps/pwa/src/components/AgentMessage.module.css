@@ -3,7 +3,8 @@
   align-items: flex-start;
   gap: var(--spacing-md);
   margin-bottom: var(--spacing-lg);
-  max-width: 80%;
+  max-width: 95%;
+  animation: slideInFromLeft var(--duration-slow) ease-out;
 }
 
 .avatar {
@@ -32,6 +33,13 @@
   color: var(--color-text);
   word-wrap: break-word;
   overflow-wrap: break-word;
+  transform: translateY(0);
+  transition: transform var(--duration-normal) ease, box-shadow var(--duration-normal) ease;
+}
+
+.messageText:hover {
+  transform: translateY(-1px);
+  box-shadow: var(--shadow-sm);
 }
 
 .metadata {
@@ -133,12 +141,13 @@
 /* Responsive design - mobile first approach */
 @media (max-width: 480px) {
   .agentMessage {
-    max-width: 90%;
+    max-width: 98%;
   }
   
   .messageText {
-    font-size: var(--font-size-sm);
-    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: var(--font-size-base);
+    padding: var(--spacing-md) var(--spacing-lg);
+    line-height: 1.6;
   }
   
   .avatar {
@@ -148,17 +157,52 @@
   }
 }
 
+@media (min-width: 481px) and (max-width: 767px) {
+  .agentMessage {
+    max-width: 90%;
+  }
+  
+  .messageText {
+    font-size: var(--font-size-base);
+    padding: var(--spacing-md) var(--spacing-lg);
+    line-height: 1.6;
+  }
+}
+
 @media (min-width: 768px) {
+  .agentMessage {
+    max-width: 85%;
+  }
+  
   .messageText {
     font-size: var(--font-size-lg);
     padding: var(--spacing-lg) var(--spacing-xl);
+    line-height: 1.7;
+  }
+}
+
+/* Slide-in animation for messages */
+@keyframes slideInFromLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
   }
 }
 
 /* Accessibility improvements */
 @media (prefers-reduced-motion: reduce) {
   .agentMessage {
-    transition: none;
+    animation: none;
+  }
+  
+  .messageText:hover,
+  .messageText:active {
+    transform: none;
+    box-shadow: none;
   }
 }
 
