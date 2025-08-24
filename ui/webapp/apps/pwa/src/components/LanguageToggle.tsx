@@ -9,11 +9,11 @@ import styles from './LanguageToggle.module.css'
  * A segmented control for switching between Portuguese and English languages.
  * Features accessibility support, smooth animations, and flag icons.
  */
-export const LanguageToggle: React.FC<LanguageToggleProps> = ({ locale, onChange }) => {
+export const LanguageToggle: React.FC<LanguageToggleProps> = ({ locale, onChange, disabled = false }) => {
   const i = t(locale)
 
   const handleToggle = (newLocale: Locale) => {
-    if (newLocale !== locale) {
+    if (!disabled && newLocale !== locale) {
       onChange(newLocale)
     }
   }
@@ -33,11 +33,12 @@ export const LanguageToggle: React.FC<LanguageToggleProps> = ({ locale, onChange
     >
       <button
         type="button"
-        className={`${styles.option} ${locale === 'pt' ? styles.optionActive : ''}`}
+        className={`${styles.option} ${locale === 'pt' ? styles.optionActive : ''} ${disabled ? styles.optionDisabled : ''}`}
         onClick={() => handleToggle('pt')}
         onKeyDown={(e) => handleKeyDown(e, 'pt')}
         aria-pressed={locale === 'pt'}
         aria-label={i.portuguese_label}
+        disabled={disabled}
       >
         <BrazilFlag className={styles.flag} />
         <span className={styles.label}>PT</span>
@@ -45,11 +46,12 @@ export const LanguageToggle: React.FC<LanguageToggleProps> = ({ locale, onChange
       
       <button
         type="button"
-        className={`${styles.option} ${locale === 'en' ? styles.optionActive : ''}`}
+        className={`${styles.option} ${locale === 'en' ? styles.optionActive : ''} ${disabled ? styles.optionDisabled : ''}`}
         onClick={() => handleToggle('en')}
         onKeyDown={(e) => handleKeyDown(e, 'en')}
         aria-pressed={locale === 'en'}
         aria-label={i.english_label}
+        disabled={disabled}
       >
         <USFlag className={styles.flag} />
         <span className={styles.label}>EN</span>

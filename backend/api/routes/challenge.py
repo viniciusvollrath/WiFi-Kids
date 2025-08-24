@@ -183,6 +183,11 @@ async def challenge_answer(body: ChallengeAnswerIn, db: Session = Depends(get_db
     # IMPORTANT: Validate against the CURRENT question payload, not stale data
     current_payload = ch.payload.copy()  # Work with current payload
     
+    # Add MAC address to metadata for conversation tracking
+    if "metadata" not in current_payload:
+        current_payload["metadata"] = {}
+    current_payload["metadata"]["mac_address"] = ch.mac
+    
     # Debug: Log the current question being validated
     current_question = current_payload.get("questions", [{}])[0]
     agent_logger.info(f"[DEBUG] Validating against question: '{current_question.get('prompt', 'No prompt')}' for answer: '{body.answers[0].value if body.answers else 'No answer'}'")

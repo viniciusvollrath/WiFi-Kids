@@ -6,6 +6,7 @@
 import { DecisionResponse, RequestOptions } from '../types'
 import { decideMock, getCurrentMockContext, isValidDecisionResponse } from './mockService'
 import { config } from './config'
+import { t } from '../i18n'
 import { 
   createAppError, 
   isNetworkError, 
@@ -247,14 +248,16 @@ export class AgentService {
       // Handle correct answers that need more questions
       const questions = validationResult.questions || []
       const hasProgress = validationResult.progress && validationResult.progress.questions_answered_correctly > 0
-      
-      const successFeedback = hasProgress ? '✅ Correto! ' : ''
-      const continueFeedback = validationResult.feedback || 'Vamos continuar!'
+      // Create separate feedback for each language
+      const successFeedback_pt = hasProgress ? '✅ Correto! ' : ''
+      const successFeedback_en = hasProgress ? '✅ Correct! ' : ''
+      const continueFeedback_pt = validationResult.feedback || 'Vamos continuar!'
+      const continueFeedback_en = validationResult.feedback || 'Let\'s continue!'
       
       return {
         decision: 'ASK_MORE',
-        message_pt: `${successFeedback}${continueFeedback} ${this.formatQuestionsAsMessage(questions, 'pt')}`,
-        message_en: `${successFeedback}${continueFeedback} ${this.formatQuestionsAsMessage(questions, 'en')}`,
+        message_pt: `${successFeedback_pt}${continueFeedback_pt} ${this.formatQuestionsAsMessage(questions, 'pt')}`,
+        message_en: `${successFeedback_en}${continueFeedback_en} ${this.formatQuestionsAsMessage(questions, 'en')}`,
         allowed_minutes: 0,
         question_pt: questions[0]?.prompt || null,
         question_en: questions[0]?.prompt || null,
