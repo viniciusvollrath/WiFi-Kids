@@ -71,7 +71,7 @@ class ConfigService {
     return {
       // API Configuration
       apiUrl,
-      apiTimeout: getEnvNumber('VITE_API_TIMEOUT', 10000),
+      apiTimeout: getEnvNumber('VITE_API_TIMEOUT', 30000),
       mockMode: getEnvBool('VITE_MOCK', false),
 
       // Persona Configuration
