@@ -1,0 +1,4 @@
+PassengerAppRoot /home/username/public_html/domain.com/api
+PassengerBaseURI /api
+PassengerAppType wsgi
+PassengerStartupFile passenger_wsgi.py

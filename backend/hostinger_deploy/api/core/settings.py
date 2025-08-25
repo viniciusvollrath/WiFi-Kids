@@ -44,9 +44,9 @@ DATABASE_URL = _getenv("DATABASE_URL", "sqlite:///./dev.db")
 
 # === OpenAI Configuration ===
 OPENAI_API_KEY = _getenv("OPENAI_API_KEY", "")
-OPENAI_MODEL = _getenv("OPENAI_MODEL", "gpt-4o-mini")
+OPENAI_MODEL = _getenv("OPENAI_MODEL", "gpt-5")
 OPENAI_TEMPERATURE = _parse_float(_getenv("OPENAI_TEMPERATURE", "0.3"), 0.3)
-OPENAI_MAX_TOKENS = _parse_int(_getenv("OPENAI_MAX_TOKENS", "3000"), 3000)
+OPENAI_MAX_TOKENS = _parse_int(_getenv("OPENAI_MAX_TOKENS", "1000"), 1000)
 
 # === Agent Configuration ===
 AGENT_TYPE = _getenv("AGENT_TYPE", "langchain")  # "langchain" or "mock"

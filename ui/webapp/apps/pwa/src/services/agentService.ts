@@ -341,7 +341,7 @@ export class AgentService {
         // Single answer for first question
         answers.push({
           id: questions[0].id,
-          value: cleanText
+          value: userText.trim()
         })
       }
     }

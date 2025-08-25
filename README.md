@@ -583,20 +583,9 @@ MIT License - see [LICENSE](LICENSE) for details.
 
 ## 👥 Team
 
-- **Paulo Cesar** — Backend Architecture, Database Design, API Development
-- **Lucas Nogueira** — LangChain Integration, AI Prompt Engineering  
+- **Paulo Cesar** — AI Engineering, Lanchain Integration, Database Design, API 
+- **Lucas Nogueira** — Backend, API
 - **Vinicius Vollrath** — Frontend Development, Infrastructure, DevOps
-
----
-
-## 🎉 Acknowledgments
-
-Special thanks to:
-- **OpenAI** for providing the GPT-5 API
-- **LangChain** for the excellent AI framework
-- **FastAPI** for the high-performance Python web framework
-- **React** for the powerful frontend library
-- **Cloudflare** for reliable edge deployment
 
 ---
 
