@@ -25,7 +25,7 @@ class AIAnswerValidator:
             raise ValueError("OPENAI_API_KEY is required for AI validation")
             
         self.client = OpenAI(api_key=api_key)
-        self.model = "gpt-5"  # Fast and cost-effective model for validation
+        self.model = "gpt-4o-mini"  # Fast and cost-effective model for validation
         
     def validate_answer(
         self,
